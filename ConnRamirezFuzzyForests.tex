@@ -86,14 +86,16 @@ In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In secti
 \section[Fuzzy Forests Algorithm]{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
 In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed iid.
-pairs $(X,Y) \sim G$.  Here $X$ is $p$ dimensional feature vector and $Y$ is a scalar outcome.   In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$ and we
-assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are $iid$ with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
+pairs $(X,Y) \sim G$.  Here $X$ is $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the the $i$th subject will be denoted by $X_{i}^{(v)}$.
+The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Finally, let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be set of values for feature $v$ across
+all $n$ subjects.
+
+In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$ and we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are $iid$ with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
 In classification, $Y$ is restricted to take the value 0 or 1.  
 
 If the goal is to predict a new outcome $Y$ based off of measurements, $X$, a good estimate of $f(X)$ is all that is required.
 We are interested in more than prediction.  We are interested in understanding how $f(X)$ changes as function of particular features. 
-Let $X=(X_{1},\ldots,X_{p})$ so that $X_{i}$ corresponds to the $i$th feature. 
-If the value of $f(X)$ varies widely according to a particular value of $X_{i}$, $X_{i}$ is, in some sense, an ``important" in determinant of
+If the value of $f(X)$ varies widely according to a particular value of the $v$th feature, $X^{(v)}$ is, in some sense, an ``important" in determinant of
 the outcome, $Y$.  
 
 If $p$ is low dimensional $(p=1,2)$, we can simply plot our estimate of $f(X)$ to understand how it varies as function of $X$. 
@@ -106,14 +108,14 @@ If the parametric model $f_{\beta}(X)$ is a close approximation to $f(X)$, it is
 will not be misleading.  Likewise, if $f_{\beta}(X)$ is a poor approximation of $f(X)$, the resulting interpretation will be misleading.  
 The parametric approximation $f_{\beta}(X)$ may be inadequate for a variety of reasons.  This may occur if important features are 
 not observed.  Even if all appropriate features are measured, $f_{\beta}(X)$ may fail to capture important interactions between features.
-In the case of linear regression, the true $f(X)$ may be nonlinear in such a way that that the best linear approximation fails to capture.
+If $f_{\beta}(X)$ is a linear regression model, $\sum_{v=1}^{p}\beta_{v}X^{(v)}$, the true $f(X)$ may be nonlinear in such a way that this best linear approximation fails to capture.
   
 Permutation VIMs provide a means of summarizing the importance of individual features without making parametric assumptions.
-We define the permutation VIM of variable $X_{i}$ as 
+We define the permutation VIM of feature $v$, $X^{(v)}$, as 
 \begin{equation}
-VIM(X_{i})=E(f(X_{1},\ldots,X_{i},\ldots,X_{p}) - f(X_{1},\ldots,\tilde{X}_{i},\ldots,X_{p}))^{2}.
+VIM(v)=E(f(X^{(1)}_{i},\ldots,X^{(v)}_{i},\ldots,X^{(p)}_{i}) - f(X^{(1)}_{i},\ldots,\tilde{X}^{(v)}_{i},\ldots,X^{(p)}_{i}))^{2}.
 \end{equation}
-Here, $X_{i}$ and $\tilde{X}_{i}$ are iid with distribution $G_{X_{i}}$ where $G_{X_{i}}$ is the marginal distribution of $X_{i}$.  This form of the VIM
+Here, $X^{(v)}_{i}$ and $\tilde{X}^{(v)}_{i}$ are iid with distribution $G_{X^{(v)}}$ where $G_{X^{(v)}}$ is the marginal distribution of $X^{(v)}_{i}$.  This form of the VIM
 is given in a slightly different form in \citep{gregorutti2013correlation} and \citep{zhu2012reinforcement}.  These authors also discuss conditions under
 which the estimate of the permutation VIM derived from random forests is consistent. 
 
@@ -121,19 +123,42 @@ which the estimate of the permutation VIM derived from random forests is consist
 \subsection{An Introduction to Random Forests}[2.2]
 Random forests is a popular ensemble method that has been applied in the setting of both classification and regression.  The random forests algorithm works
 by combining the predictions of an ensemble of classification and regression trees.  Each tree is grown on a separate bootstrap sample of the data.  The number
-of trees grown in this manner is denoted as $ntree$.  Each regression tree is highly unstable and gives highly variable predictions.  Averaging multiple trees over
+of trees grown in this manner is denoted as $ntree$.  The subjects that are not selected in a particular bootstrap sample are said to be ``out of bag."  
+
+Call the $k$th tree $\hat{f}_{k}(X)$.  In the case of regression trees,
+$\hat{f}(X)=\frac{1}{ntree}\sum_{k=1}^{ntree}\hat{f}_{k}(X)$.  In the case of classification, $\hat{f}(X)$ is the majority vote of the $ntree$ predictions given
+by $\hat{f}_{k}(X)$.  Each regression tree is highly unstable and gives highly variable predictions.  Averaging multiple trees over
 many bootstrap samples leads to more stable estimates of $f(X)$.  The algorithm described thus far is known as bagging (bootstrap-aggregating).  This 
 algorithm is a special case of random forests.  
 
-A further element of randomness is introduced by random forests.  Before a node in the tree split a subset of features is chosen at random.  Of these randomly 
-chosen features, the feature with the highest marginal importance is used to split the node.      
+A further element of randomness is introduced by random forests.  Before a node in a particular tree is split, a subset of features is chosen at random.  Of these randomly 
+chosen features, the feature with the highest marginal importance is used to split the node.  The number of randomly selected features at each stage is
+commonly denoted as $mtry$.  High values of $mtry$ tend to lead to just a few important features getting selected at the majority cut-points.
+Lower values of $mtry$ allow more features to play a role in the estimation $f(X)$.  In the case of regression, a common default value of $mtry$ is $\sqrt{p}$.
+In the case of classification  $\left\lfloor p/3 \right\rfloor$ is common choice.
   
- Call the $k$th decision tree $\hat{f}_{k}(X_{i})$.  In the case of regression trees,
-$\hat{f}(X_{i})=\frac{1}{ntree}\sum_{k=1}^{ntree}\hat{f}_{k}(X_{i})$.  In the case of classification 
+Random forest VIMs are obtained by testing how predictive accuracy suffers when the values of individual predictors are permuted.  Let $OOB_{k} \subset \{1,\ldots, n\}$ 
+be the out of bag samples in the $k$th bootstrap sample.  Let $\pi_{k}$ be a random permutation of the elements of $OOB_{k}$ and let   
+$\pi_{k}^{(v)}(X_{i}) = (X_{i}^{(1)},\ldots,X_{\pi_{k}(i)}^{(v)},\ldots,X_{i}^{(p)}),$ where $i \in OOB_{k}$.   In other words, $\pi_{k}^{(v)}$ 
+permutes the values of the $v$th feature across all out of bag subjects.  The variable importance of the $i$th feature from the $k$th tree is defined as
+\begin{equation}
+\widehat{VIM}^{k}(v)= \frac{\sum_{i \in OOB_{k}}(y_{i}-\hat{f}^{k}(\pi_{k}^{(v)}(X_{i}))^{2} - (y_{i} - \hat{f}^{k}(X_{i}))^{2}}{|OOB_{k}|}
+\end{equation}
+The variable importance for the entire random forest is defined as
+\begin{equation}
+\widehat{VIM}(v) = \frac{\sum_{k=1}^{ntree}\widehat{VIM}^{k}(v)}{ntree}
+\end{equation}
 
-   
+\subsection{A Brief Review of WGCNA}[2.3]
+WGCNA is a rigorous framework for detecting clusters or modules of inter-related features.  There is a large literature on WGCNA.
+We briefly review the steps of a WGCNA network analysis.  The user first specifies a similarity function $s_{ij}=S(X^{(i)},X^{(j)})$ taking
+values between 0 and 1.  Both unsigned and signed networks are possible.  If the features are continuous, the most common choice 
+of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or $\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is signed or 
+unsigned.
 
-   
+This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  This adjacency function determines how the adjacency function
+translates into network adjacencies.  The simplest choice of adjacency function is the $signum(s_{ij},\tau)$ function.  This function
+simply sets a hard threshold $\tau$.  If $s_{ij} \geq \tau, a_{ij}=signum(s_{ij},\tau)=1$ otherwise $a_{ij}=0$.
 
 
 \bibliography{RFrefs}
