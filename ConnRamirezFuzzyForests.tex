@@ -150,15 +150,36 @@ The variable importance for the entire random forest is defined as
 \end{equation}
 
 \subsection{A Brief Review of WGCNA}[2.3]
-WGCNA is a rigorous framework for detecting clusters or modules of inter-related features.  There is a large literature on WGCNA.
+WGCNA is a rigorous framework for constructing a network of features. 
+This network is then used to determine clusters or modules of inter-related features. 
 We briefly review the steps of a WGCNA network analysis.  The user first specifies a similarity function $s_{ij}=S(X^{(i)},X^{(j)})$ taking
 values between 0 and 1.  Both unsigned and signed networks are possible.  If the features are continuous, the most common choice 
-of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or $\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is signed or 
-unsigned.
+of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or $\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is unsigned or 
+signed.
 
 This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  This adjacency function determines how the adjacency function
 translates into network adjacencies.  The simplest choice of adjacency function is the $signum(s_{ij},\tau)$ function.  This function
-simply sets a hard threshold $\tau$.  If $s_{ij} \geq \tau, a_{ij}=signum(s_{ij},\tau)=1$ otherwise $a_{ij}=0$.
+simply sets a hard threshold $\tau$.  If $s_{ij} \geq \tau, a_{ij}=signum(s_{ij},\tau)=1$ otherwise $a_{ij}=0$.  Nodes are either connected or 
+un-connected if the $signum$ adjacency function is used.  In practice, a soft-thresholded network is often more plausible than a 
+hard-thresholded one.  The power function $a_{ij}=s_{ij}^{q}$ is common choice of soft-thresholding adjacency function.  Large values
+of $q$ yield behavior closer to a hard-thresholded network.  Once an adjacency function is calculated, an hierarchical clustering tree algorithm 
+may be used to define clusters of features.
+
+It is common to apply this hierarchical clustering algorithm to the topological overlap matrix rather than the adjacency matrix.  The topological
+overlap between two nodes is defined as 
+\begin{equation}
+\omega_{ij} = \frac{l_{ij} + a_{ij}}{min\{k_{i},k_{j}\} + 1 - a_{ij}}
+\end{equation} 
+where $l_{ij}=\sum_{u}a_{iu}a_{uj}$ and $k_{i}=\sum_{u}a_{iu}$.  The topological overlap between two nodes can be high even if $a_{ij}$ is low.
+This occurs when the two nodes are strongly connected to the same set of nodes.  Use of topological overlap rather
+than the adjacencies may lead to more distinct modules.
+
+In many biological contexts, it is suspected that only a few features are highly connected.  This prior knowledge leads to the scale-free criterion for
+determining which value of $q$ to select.  A network is said to have a generalized scale-free topology if $p(k) \sim k^{\gamma}$ or
+ $\log_{10}(p(k)) \propto \log_{10}(k)$.  This suggests that one should select a smaller value of $q$ such that the $R^{2}$ between 
+  $\log_{10}(p(k))$ and $\log_{10}(k)$ is high.
+  
+  \subsection{The Fuzzy Forests Algorithm}[2.4]
 
 
 \bibliography{RFrefs}
