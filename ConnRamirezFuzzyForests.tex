@@ -81,7 +81,7 @@ modules, selects the top $k$ features.
 There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
               
 The article is organized as follows.  In section 2 of this article, we briefly review the random forests, WGCNA, and introduce the fuzzy forests algorithm.
-In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we provide a heuristic proof that under the right assumptions, the VIMs obtained by fitting a separate random forest on each module are asymptotically unbiased.  In section 5, we conduct simulations to comparing fuzzy forests to both random forests and conditional inference forests (CIFs).  We demonstrate that fuzzy forests has performance comparable to that of CIF's although at much lower computational cost.  In section 6, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 7 ends the article with a discussion and summary of our results. 
+In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we provide a heuristic proof that under the right assumptions, the VIMs obtained by fitting a separate random forest on each module are asymptotically unbiased.  In section 5, we conduct simulations to comparing fuzzy forests to both random forests and conditional inference forests (CIFs).  We demonstrate that fuzzy forests has performance comparable to that of CIFs' although at much lower computational cost.  In section 6, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 7 ends the article with a discussion and summary of our results. 
 
 \section[Fuzzy Forests Algorithm]{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
@@ -180,7 +180,61 @@ determining which value of $q$ to select.  A network is said to have a generaliz
   $\log_{10}(p(k))$ and $\log_{10}(k)$ is high.
   
   \subsection{The Fuzzy Forests Algorithm}[2.4]
+The fuzzy forests algorithm is an extension of random forests designed to obtain less biased variable importance rankings in the presence
+of correlated features.  In section 4, we describe assumptions under which fuzzy forests should provide unbiased VIMs.  In this section,
+we describe the algorithm and provide an intuitive explanation for why it works.
 
+The fuzzy forests algorithm can be subdivided into two steps: a screening step and a selection step.  The screening step works in a piecewise fashion
+to screen out unimportant features.  The screening step takes as input a partition of the features such that the correlation within each partition is 
+roughly constant.  Our package, \pkg{fuzzyforest}, facilitates the use of WGCNA to obtain such a partition of features.  However, 
+it is possible to use alternative methods to partition the features.  Denote this partitioning of the features by set $P=\{P_{1},\ldots,P_{m}\}$.
+Let $p_{l}=|P_{l}|$ so that $\sum_{l=1}^{m}p_{l}=p$.
+
+The screening step operates independently on each partition.  For each element of the partition $P_{l}$, the screening step fits an iterative series of
+random forests to eliminate features in backwards stepwise fashion.  Starting with all features in the partition $P_{l}$, a random forest is fit using all
+features in $P_{l}$.  The least important features are then eliminated, call the reduced set of features after the first random forest $P_{l}^{(1)}$.  
+For example, the features with VIM in bottom 25\% might be dropped at each step. 
+A 2nd random forest is fit using features in $P_{l}^{(1)}$.  The least important features from this latest random forest are then eliminated leading a
+further reduced set of features $P_{l}^{(2)} \subset P_{l}^{(1)} \subset P_{l}$.  Call the subset obtained after the $k$th iteration $P_{l}^{(k)}$ and let
+$p^{(k)}_{l}=|P_{l}^{(k)}|$.
+Features are eliminated in this manner until a user-specified 
+stopping criteria is reached.  For example, features may be eliminated until 5\% of the original $P_{l}$ features remain.  
+
+The user must specify a few tuning parameters at the screening step.  First of all, the user must specify how many features are to be dropped after 
+each random forest is fit, we call this fraction the $drop\_fraction$.   The user must also specify a stopping criteria. 
+In \pkg{fuzzyforest} the user specifies what percentage of the original $p_{l}$ features to retain.  This percentage will be called the $keep\_fraction$.  
+The first time the number of features drops below $keep\_fraction*p_{l}$, the iterative series of random forests will stop and the top 
+$\left\lfloor keep\_fraction*p_{l} \right\rfloor$ features will be selected.  More precisely, for the first iteration $k$ such that $p^{(k)}_{l}<keep\_fraction*p_{l}$, 
+we retain the top $\left\lfloor keep\_fraction*p_{l} \right\rfloor$ features from $P_{l}^{(k-1)}$.         
+
+For each random forest, $mtry$ and $ntree$ must appropriately selected.  Since the number features varies across random forests, $mtree$
+and $ntree$ must be a function of the current number of features.   Suppose we at iteration $k$ and are about fit a random forest to obtain
+$P_{l}^{(k+1)}\subset P_{l}^{(k)}$.  In the case of regression, \pkg{fuzzyforest} lets $mtry=\sqrt{p^{(k)}_{l}}mtry\_factor$.  For classification 
+\pkg{fuzzyforest} sets $mtry=\left\lfloor p^{(k)}_{l}/3 \right\rfloor mtry\_factor$.  In both cases, $mtry\_factor$ must be pre-specified by the user
+with a default of 1.  The parameter $ntree$ must be set high enough to be able to pick up the effects
+of important variables, however if $ntree$ is set too high, the iterative series of random forests will take a long time to run.  The package \pkg{fuzzyforest} sets $ntree=max(min\_ntree,p^{(k)}_{l}*ntree\_factor)$.
+
+It is important to note that the VIMs obtained by analyzing each module separately are different than the VIMs obtained
+by fitting a single (or an iterative series of) random forests.  In fact, it is possible that analyzing each module separately 
+will introduce bias into the estimated VIMs. 
+The selection step of fuzzy forests achieves two goals.   
+If the correct assumptions are met approximately, the selection step of fuzzy forests achieves two goals.  First, if the right assumptions are 
+approximately met, the VIMs obtained from analyzing each module separately are asymptotically the same as those that 
+would have been obtained if VIMs were obtained by analyzing all features at once. Second, it reduces the number of features that 
+have to be analyzed at one time.  (Maybe introduce assumptions here)
+ 
+The selection step consists of one last iterative series of random forests. This series of random forests is fit on all features that have
+been selected at the screening step.  Note that a separate choice of $drop\_fraction$, $mtry\_factor$, $min\_tree$,
+and $ntree\_factor$ may be used.  In the package \pkg{fuzzyforest}, $keep\_fraction$ is implicitly defined by user.  The user specifies 
+how many features will selected by the selection step.  
+
+It is important that features are eliminated in stepwise fashion at the selection step.  At the selection step, the rankings obtained by
+a single random forest will be biased because the features that have survived the selection step are correlated with one another.
+
+
+
+     
+    
 
 \bibliography{RFrefs}
 \end{document}
