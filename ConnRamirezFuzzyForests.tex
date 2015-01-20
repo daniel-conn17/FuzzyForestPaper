@@ -7,24 +7,20 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 
-
-
 %% almost as usual
-\author{Daniel Conn\\UCLA SPH, Biostatistics \And Tuck Ngun \And Christina Ramirez\\UCLA SPH, Biostatistics }
+\author{Daniel Conn\\UCLA SPH, Biostatistics \And Tuck Ngun \And  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
 \title{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for Correlated, High-Dimensional Data}
 
 %% for pretty printing and a nice hypersummary also set:
 \Plainauthor{Daniel Conn, Christina Ramirez} %% comma-separated
 \Plaintitle{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for High-Dimensional, Correlated Data} %% without formatting
-\Shorttitle{\pkg{fuzzyforest}: Fuzzy Forests in \proglang{R} } %% a short title (if necessary)
+\Shorttitle{\pkg{fuzzyforest}: Fuzzy Forests in \proglang{R}} %% a short title (if necessary)
 
 %% an abstract and keywords
-\Abstract{
- In this paper we introduce fuzzy forests, a new machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
+\Abstract{In this paper we introduce fuzzy forests, a new machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
  problems.  Fuzzy forests is specifically designed to provide unbiased rankings of variable importance in the presence of correlated features. 
 Fuzzy forests uses Weighted Gene Coexpressionn Network Analysis (WGCNA) to detect groups of highly correlated features.  Unbiased rankings are
-obtained by fitting separate random forests on each module.  We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforests}.     
-}
+obtained by fitting separate random forests on each module.  We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforests}.}
 \Keywords{Random Forests, WGCNA, machine learning,\proglang{R}}
 \Plainkeywords{Random Forests, WGCNA, machine learning,R} %% without formatting
 %% at least one keyword must be supplied
@@ -63,7 +59,7 @@ obtained by fitting separate random forests on each module.  We also introduce o
 %% include your article here, just as usual
 %% Note that you should use the \pkg{}, \proglang{} and \code{} commands.
 
-\section[Introduction]{Introduction}
+\section{Introduction}
 %% Note: If there is markup in \(sub)section, then it has to be escape as above.
 The problem of identifying important features in the presence of correlation has been an area of intense research within the statistics
 and machine learning community.  Biological applications have, in particular, spurred the development of high dimensional feature selection methods.   
@@ -72,7 +68,7 @@ While model based feature selection algorithms such as the LASSO or SCAD may eff
 Random forest variable importance measures (VIMs) offer a nonparametric alternative to model based feature selection algorithms \citep{breiman2001random}.
 Random forests is a popular ensemble based machine learning algorithm.  While random forest VIMs have demonstrated the ability to accurately capture the true 
 importance of features in settings where the features are independent, it is well-known that random forests VIMs are biased when features are correlated
-with one another (\cite{strobl2007bias}; \cite{strobl2008conditional}; \cite{nicodemus2009predictor}).
+with one another (\citep{strobl2007bias}; \citep{strobl2008conditional}; \citep{nicodemus2009predictor}).
 
 Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between groups is low.  We then use an iterative feature selection algorithm to select the most important
 features from each.  A random forest is then fit to the features that have survived this first round.  A final iterative random forest,  combining features from all
@@ -81,9 +77,9 @@ modules, selects the top $k$ features.
 There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
               
 The article is organized as follows.  In section 2 of this article, we briefly review the random forests, WGCNA, and introduce the fuzzy forests algorithm.
-In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we provide a heuristic proof that under the right assumptions, the VIMs obtained by fitting a separate random forest on each module are asymptotically unbiased.  In section 5, we conduct simulations to comparing fuzzy forests to both random forests and conditional inference forests (CIFs).  We demonstrate that fuzzy forests has performance comparable to that of CIFs' although at much lower computational cost.  In section 6, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 7 ends the article with a discussion and summary of our results. 
+In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we conduct simulations to comparing fuzzy forests to both random forests and conditional inference forests (CIFs).  We demonstrate that fuzzy forests has performance comparable to that of CIFs' although at much lower computational cost.  In section 5, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 6 ends the article with a discussion and summary of our results. 
 
-\section[Fuzzy Forests Algorithm]{Variable Importance Measures and the Fuzzy Forests Algorithm}
+\section{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
 In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed iid.
 pairs $(X,Y) \sim G$.  Here $X$ is $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the the $i$th subject will be denoted by $X_{i}^{(v)}$.
@@ -179,10 +175,10 @@ determining which value of $q$ to select.  A network is said to have a generaliz
  $\log_{10}(p(k)) \propto \log_{10}(k)$.  This suggests that one should select a smaller value of $q$ such that the $R^{2}$ between 
   $\log_{10}(p(k))$ and $\log_{10}(k)$ is high.
   
-  \subsection{The Fuzzy Forests Algorithm}[2.4]
+\subsection{The Fuzzy Forests Algorithm}[2.4]
 The fuzzy forests algorithm is an extension of random forests designed to obtain less biased variable importance rankings in the presence
-of correlated features.  In section 4, we describe assumptions under which fuzzy forests should provide unbiased VIMs.  In this section,
-we describe the algorithm and provide an intuitive explanation for why it works.
+of correlated features.  In following section, we describe the motivation behind fuzzy forests and explain why it should 
+provide less biased estimates of VIMs.  In this section, we describe the algorithm.
 
 The fuzzy forests algorithm can be subdivided into two steps: a screening step and a selection step.  The screening step works in a piecewise fashion
 to screen out unimportant features.  The screening step takes as input a partition of the features such that the correlation within each partition is 
@@ -213,23 +209,113 @@ $P_{l}^{(k+1)}\subset P_{l}^{(k)}$.  In the case of regression, \pkg{fuzzyforest
 \pkg{fuzzyforest} sets $mtry=\left\lfloor p^{(k)}_{l}/3 \right\rfloor mtry\_factor$.  In both cases, $mtry\_factor$ must be pre-specified by the user
 with a default of 1.  The parameter $ntree$ must be set high enough to be able to pick up the effects
 of important variables, however if $ntree$ is set too high, the iterative series of random forests will take a long time to run.  The package \pkg{fuzzyforest} sets $ntree=max(min\_ntree,p^{(k)}_{l}*ntree\_factor)$.
-
-It is important to note that the VIMs obtained by analyzing each module separately are different than the VIMs obtained
-by fitting a single (or an iterative series of) random forests.  In fact, it is possible that analyzing each module separately 
-will introduce bias into the estimated VIMs. 
-The selection step of fuzzy forests achieves two goals.   
-If the correct assumptions are met approximately, the selection step of fuzzy forests achieves two goals.  First, if the right assumptions are 
-approximately met, the VIMs obtained from analyzing each module separately are asymptotically the same as those that 
-would have been obtained if VIMs were obtained by analyzing all features at once. Second, it reduces the number of features that 
-have to be analyzed at one time.  (Maybe introduce assumptions here)
- 
+   
 The selection step consists of one last iterative series of random forests. This series of random forests is fit on all features that have
 been selected at the screening step.  Note that a separate choice of $drop\_fraction$, $mtry\_factor$, $min\_tree$,
 and $ntree\_factor$ may be used.  In the package \pkg{fuzzyforest}, $keep\_fraction$ is implicitly defined by user.  The user specifies 
 how many features will selected by the selection step.  
 
-It is important that features are eliminated in stepwise fashion at the selection step.  At the selection step, the rankings obtained by
-a single random forest will be biased because the features that have survived the selection step are correlated with one another.
+\subsection{Motivation for Fuzzy Forests Algorithm}[2.5]
+
+The selection step of fuzzy forests is motivated by the following observation concerning the theoretical properties of VIMs. 
+Let $G_{P^{(l)}}$ denote the joint distribution of the features in partition $P^{(l)}$ and let $X^{P^{(l)}} \sim G_{P^{(l)}}$.
+Suppose that $X^{P^{(i)}} \perp X^{P^{(j)}}$ for all $i\neq j$ and suppose that $f(X)=\sum_{j=1}^{m}f_{j}(X^{P^{(j)}})$.  If we fit
+a random forest using only the features in $P^{(l)}$ we are no longer estimating $E[Y|X]=f(X)$, instead we are estimating
+ $E[E[Y|X]|X^{(l)}]=E[f(X)|X^{P^{(l)}}]=\sum_{j=1}^{m}E[f_{j}(X^{P^{(j)}})|X^{P^{(l)}}]=f_{l}(X^{P^{(l)}}) + \sum_{j\neq l}^{m}E[f_{j}(X^{P^{(j)}})]$
+
+Suppose feature $v$ is in partition $P^{(l)}$.  The variable importance obtained by fitting a random forest to only those features in  $P^{(l)}$
+ is estimating the following quantity: 
+ \begin{equation}
+ VIM^{*}(v)=E(f_{l}(X^{(l_{1})}_{i},\ldots,X^{(v)}_{i},\ldots,X^{(l_{m})}_{i}) - f_{l}(X^{(l_{1})}_{i},\ldots,\tilde{X}^{(v)}_{i},\ldots,X^{(l_{m})}_{i}))^{2}.
+ \end{equation}
+ Here, $X_{i}^{l_{k}}$ is the $k$th element of partition $P^{(l)}$. As in equation (1), $X^{(v)}$ and $\tilde{X}^{(v)}$ are iid from $G_{X^{(v)}}$.
+ We see from this equation that $VIM^{*}(v)=VIM(v)$ if the true regression function is additive across modules and if the modules are independent
+ of one another.  If our assumptions are met, the VIMs obtained by analyzing each module separately are asymptotically the same as those that 
+would have been obtained if VIMs were obtained by analyzing all features at once.       
+
+Therefore, the selection step of fuzzy forests achieves two goals.  First of all, it reduces the number of features that have to be 
+analyzed at one time.  Second, the finite sample bias caused by correlated features is alleviated.  In 
+\citep{nicodemus2009predictor}, it is observed that insignificant features that are correlated with a significant feature 
+are more likely to be chosen at the root of tree than uncorrelated significant features.  The high importance of these insignificant
+correlated features comes at the cost of the significant uncorrelated features.  When we analyze each module separately, features 
+in different groups are no longer competing against one another.   
+
+This above observations suggest that we should fit a separate random forest to each module and then report the the resulting
+estimates of the VIMs.  Why does the fuzzy forests algorithm diverge from this simple procedure?
+We stress that the VIMs obtained by analyzing each module separately are, in general, different than the VIMs obtained
+by fitting a single random forests.  The assumptions of additivity across modules and independence of modules are quite strong.
+
+The fuzzy forests algorithm relaxes these overly restrictive assumptions.  Fuzzy forests allows for interactions between features that
+were found to be important within modules.  In biological applications, modules might represent different biological systems.
+thus, it is reasonable to allow these systems to interact with one another.  In fuzzy forests, the selection step acts as a screening mechanism.
+Fuzzy forests is implicitly making the assumption that the features that have high VIMs.   
+
+It is important that iterative random forests are used at the selection step.  When features from separate modules are combined,
+the potential for bias due to correlation between features is re-introduced.  The iterative random forests, in practice, manage to
+eliminate unimportant predictors which are correlated with important ones.  
+
+We do not recommend interpreting the estimated VIMs too closely.  While the ranking of the VIMs obtained from
+fuzzy forests are less biased than those derived from random forests, the estimated VIMs may still be quite biased.
+
+\section{The fuzzyforest package}
+The package \pkg{fuzzyforest}  has two functions for fitting the fuzzy forests model.  The first is \code{WGCNA_fuzzyforest}, the
+second is \code{fuzzyforest}.  The function \code{WGCNA_fuzzyforest} automatically carries out a WGCNA analysis on the input features.
+Then it uses the newly derived modules as input to the fuzzy forest algorithm.  The WGCNA analysis is carried out via the 
+\code{blockwiseModules} function from the package \pkg{WGCNA}.
+
+The second function \code{fuzzyforest} assumes that the features have already been partitioned into separate modules.
+In particular a user is able to carefully conduct a separate module detection analysis using \pkg{WGCNA}.  Such an 
+analysis might find the smallest value of $p$ such that the scale-free topology criterion is met.  The function \code{fuzzyforest}
+is then able to carry out the fuzzy forests algorithm using the output of \pkg{WGCNA}.
+
+A number of tuning parameters must be specified before fuzzy forests can be run.   These tuning parameters are organized
+into separate control objects.  Tuning parameters related to WGCNA are specified with an \code{S3} object of type \code{WGCNA_control}
+with constructor \newline \code{WGCNA_control()}.
+Similarly tuning parameters related to the screening step and the select step are specified through objects of type 
+\code{screen_control} and \code{select_control}.  
+We generate data using the function 
+\code{simulateDatExpr5Modules} and demonstrate the usual application of \newline \code{WGCNA_fuzzyforest}.
+\begin{CodeChunk}
+\begin{CodeInput}
+R> n <- 1000
+R> p <- 2000
+R> MEs <- matrix(rnorm(nGenes*n), nrow=n, ncol=nGenes) 
+R> sim <- simulateDatExpr5Modules(nGenes=p, simulateProportions=rep(1/5,5),  
++  MEt=MEs[, 1], MEbl=MEs[,2], MEbr=MEs[,3], MEy=MEs[,4], MEgr=MEs[,5])
+R> X <- simMods$datExpr
+R> y <- X%*%c(rep(2, 3),rep(0, p - 3)) + rnorm(n)
+R> fit <- WGCNA_fuzzyforest(X, y, WGCNA_params = WGCNA_control(p=6),
++ screen_params = screen_control(mtry_factor=2),
++ select_params = select_control(number_selected=2), num_processors=1)
+\end{CodeInput}
+\end{CodeChunk}
+\code{WGCNA_fuzzyforest} returns an \code{S3} object of type \code{fuzzy_forest} consisting of a list.  This list 
+contains a \code{data.frame} with the ranking and VIM of the selected features.  It also contains the final random
+forest that was fit at the selection step, along with the module membership and further information about
+the weighted co-expression network.
+
+Objects of type \code{fuzzy_forest} have the usual generic methods.  The function \code{print} returns the list
+of selected features.  The function \code{predict(fuzzy_forest, new_data)} takes in a \code{data.frame} or 
+\code{matrix} and produces predictions via a random forest based on the selected features.  
+
+The number of features selected by fuzzy forests must be pre-specified.  It is possible to fit separate models
+selecting a different numbers of features for each model.  The predictive accuracy on a test set can then 
+be used to select one of these models.  If a test set is unavailable a plot of the test error versus the number 
+of features selected may shed light on when the fuzzy forests algorithm begins over-fitting.
+Note that these models will not necessarily be nested.
+  
+(Insert section on plot function here)
+\section{Simulations}
+
+
+  
+
+
+
+
+
+
+     
 
 
 
