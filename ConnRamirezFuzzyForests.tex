@@ -8,7 +8,7 @@
 \usepackage{amsthm}
 
 %% almost as usual
-\author{Daniel Conn\\UCLA SPH, Biostatistics \And Tuck Ngun \And  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
+\author{Daniel Conn\\UCLA SPH, Biostatistics \And Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \And  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
 \title{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for Correlated, High-Dimensional Data}
 
 %% for pretty printing and a nice hypersummary also set:
@@ -273,20 +273,26 @@ into separate control objects.  Tuning parameters related to WGCNA are specified
 with constructor \newline \code{WGCNA_control()}.
 Similarly tuning parameters related to the screening step and the select step are specified through objects of type 
 \code{screen_control} and \code{select_control}.  
-We generate data using the function 
-\code{simulateDatExpr5Modules} and demonstrate the usual application of \newline \code{WGCNA_fuzzyforest}.
+
+We demonstrate the workings of \pkg{fuzzyforest} with a small simulation.
+The features have multivariate normal distribution and were generated using the package \pkg{mvtnorm}.  
+There are 5 modules.  Within each module the correlation between features
+is .8 and the variance of each feature is 1.  The modules are independent of one another.
+The true model is linear and two of the 5 modules have 2 significant coefficients set to 5.
 \begin{CodeChunk}
 \begin{CodeInput}
-R> n <- 1000
-R> p <- 2000
-R> MEs <- matrix(rnorm(nGenes*n), nrow=n, ncol=nGenes) 
-R> sim <- simulateDatExpr5Modules(nGenes=p, simulateProportions=rep(1/5,5),  
-+  MEt=MEs[, 1], MEbl=MEs[,2], MEbr=MEs[,3], MEy=MEs[,4], MEgr=MEs[,5])
-R> X <- simMods$datExpr
-R> y <- X%*%c(rep(2, 3),rep(0, p - 3)) + rnorm(n)
-R> fit <- WGCNA_fuzzyforest(X, y, WGCNA_params = WGCNA_control(p=6),
-+ screen_params = screen_control(mtry_factor=2),
-+ select_params = select_control(number_selected=2), num_processors=1)
+R> n <- 100
+R> p <- 50
+R> mod_sigma <- matrix(.8,10,10); diag(mod_sigma)=1
+R> sigma <- as.matrix(.bdiag(lapply(1:5, function(j) mod_sigma))) 
+R> X <- rmvnorm(n, mean=rep(0, 50), sigma=sigma)
+R> beta <- c(rep(5,2),rep(0,10-2),rep(5,2),rep(0,50-12))
+R> y <- X%*%beta + rnorm(n, sd=.1)
+R> X <- as.data.frame(X)
+R> fit <- WGCNA_fuzzyforest(X,y,WGCNA_params=WGCNA_control(minModuleSize=1)
++ ,screen_params = screen_control(keep_fraction=.5, drop_fraction=.2)
++ ,select_params = select_control(number_selected=4, drop_fraction=.1) 
++ ,num_processors=4)
 \end{CodeInput}
 \end{CodeChunk}
 \code{WGCNA_fuzzyforest} returns an \code{S3} object of type \code{fuzzy_forest} consisting of a list.  This list 
@@ -304,7 +310,14 @@ be used to select one of these models.  If a test set is unavailable a plot of t
 of features selected may shed light on when the fuzzy forests algorithm begins over-fitting.
 Note that these models will not necessarily be nested.
   
-(Insert section on plot function here)
+The generic function \code{plot} yields a visual display of which modules are important.  The grey bars
+represent what percentage of the total $p$ features fall into a particular module.  The blue bars represent
+the percentage of selected features that fall into each module.  Applying the function \code{plot} to the
+object \code{fit} above, we obtain the following graph.
+\begin{figure}
+\caption{Result of \code{plot(fit)}} 
+\includegraphics{ch3plot}
+\end{figure}
 \section{Simulations}
 
 
