@@ -8,7 +8,7 @@
 \usepackage{amsthm}
 
 %% almost as usual
-\author{Daniel Conn\\UCLA SPH, Biostatistics \And Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \And  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
+\author{Daniel Conn\\ UCLA SPH, Biostatistics \AND Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \AND  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
 \title{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for Correlated, High-Dimensional Data}
 
 %% for pretty printing and a nice hypersummary also set:
@@ -261,7 +261,7 @@ fuzzy forests are less biased than those derived from random forests, the estima
 The package \pkg{fuzzyforest}  has two functions for fitting the fuzzy forests model.  The first is \code{WGCNA_fuzzyforest}, the
 second is \code{fuzzyforest}.  The function \code{WGCNA_fuzzyforest} automatically carries out a WGCNA analysis on the input features.
 Then it uses the newly derived modules as input to the fuzzy forest algorithm.  The WGCNA analysis is carried out via the 
-\code{blockwiseModules} function from the package \pkg{WGCNA}.
+\code{blockwiseModules} function from the package \pkg{WGCNA}.  
 
 The second function \code{fuzzyforest} assumes that the features have already been partitioned into separate modules.
 In particular a user is able to carefully conduct a separate module detection analysis using \pkg{WGCNA}.  Such an 
@@ -295,10 +295,11 @@ R> fit <- WGCNA_fuzzyforest(X,y,WGCNA_params=WGCNA_control(minModuleSize=1)
 + ,num_processors=4)
 \end{CodeInput}
 \end{CodeChunk}
-\code{WGCNA_fuzzyforest} returns an \code{S3} object of type \code{fuzzy_forest} consisting of a list.  This list 
-contains a \code{data.frame} with the ranking and VIM of the selected features.  It also contains the final random
-forest that was fit at the selection step, along with the module membership and further information about
-the weighted co-expression network.
+If the outcome, \code{y}, is a \code{factor} the random forests will be constructed using classification trees,
+otherwise regression trees will be used. \code{WGCNA_fuzzyforest} returns an \code{S3} object of type 
+\code{fuzzy_forest} consisting of a list.  This list contains a \code{data.frame} with the ranking and VIM 
+of the selected features.  It also contains the final random forest that was fit at the selection step, along 
+with the module membership and further information about the weighted co-expression network.
 
 Objects of type \code{fuzzy_forest} have the usual generic methods.  The function \code{print} returns the list
 of selected features.  The function \code{predict(fuzzy_forest, new_data)} takes in a \code{data.frame} or 
@@ -314,26 +315,83 @@ The generic function \code{plot} yields a visual display of which modules are im
 represent what percentage of the total $p$ features fall into a particular module.  The blue bars represent
 the percentage of selected features that fall into each module.  Applying the function \code{plot} to the
 object \code{fit} above, we obtain the following graph.
-\begin{figure}
-\caption{Result of \code{plot(fit)}} 
+\begin{figure}[c]
+\caption{Result of \code{plot(fit)}}
 \includegraphics{ch3plot}
 \end{figure}
 \section{Simulations}
+In this section we demonstrate the performance of fuzzy forests on a number of simulated data sets.
+Our first set of simulations assumes a logistic regression model.  In all simulations, the sample size
+was $n=1000$.  We let the number of features equal $p=100$ and $1000$.
+For each simulation, we carried out 100 simulations.  In each simulation, the number of features selected
+was 10.    
+
+Modules were generated using the function \code{simulateModule} from \pkg{WGCNA}.
+In the case, where $p=100$ there are 3 modules each of size 25.  The features were multivariate
+normal.  Each feature had variance 1.  The correlation within each module was .8.  The modules were independent of one 
+another and there were an additional 25 features that were independent of each other and independent of each module.  
+
+The true regression function is of the form $\log(p_{i}/(1-p_{i}))=X_{i}'\beta$ where $p_{i}$ is probability that
+subject $i$ has outcome 1.   For the case when $p=100$,  the first 3 features are significant with values
+1, .5, and .25.  The first 3 independent features are also significant with the same values.  We therefore have
+\begin{equation}
+\log(p_{i}/(1-p_{i})) = x_{1} + .5x_{2} + .25x_{3} + x_{76} + .5x_{77} + .25x_{78}
+\end{equation}
+where $x_{1}, x_{2}$ and $x_{3}$ are highly correlated and $ x_{76}, x_{77}$, and $x_{78}$ are independent.
+
+We present below the results of fuzzy forests on 100 simulated data sets.  In addition to presenting the VIMs
+for the significant predictors, we also present the VIMs for $x_{4}$ and $x_{79}$.  Note that fuzzy forests was
+able to detect the 4 most important features: $x_{1}, x_{2}, x_{76},$ and $x_{77}$.  The simulation also 
+demonstrates fuzzy forests still has a tendency to select unimportant features that are correlated with important 
+ones.   Although this bias is much reduced in comparison to random forests.
+\begin{table}[hc]
+\centering
+\caption{Results of Simulation for $p=100$}
+\begin{tabular}{lll}
+Feature&Avg VIM& Probability of Selection\\
+\hline
+$x_{1}$  & .058 &  .75\\
+$x_{2}$  & .023 &  .32\\
+$x_{3}$  & .014 &  .21\\
+$x_{4}$ & .007 &  .10\\
+$x_{76}$ & .074 & 1.0\\
+$x_{77}$ & .062 & .83 \\
+$x_{78}$ & .001 & .14 \\
+$x_{79}$ & .000 & 0.0
+\end{tabular}
+\end{table}
+
+In the case where $p=1000$, there were 9 modules each of size 100.  Modules were independent of one
+another and the correlation structure within modules was  once again .8.  The last 100 features were independent
+of one another and of the 9 modules.  The first 3 of these independent features were significant yielding the following
+regression function:
+\begin{equation}
+\log(p_{i}/(1-p_{i})) = x_{1} + .5x_{2} + .25x_{3} + x_{901} + .5x_{902} + .25x_{903}
+\end{equation}
+We show the average VIMs over 100 simulations and present the VIMs of $x_{4}$ and the $x_{904}$ in
+addition to the significant ones. Note that the VIMs are at an overall lower level.  The selection probability 
+of the most significant features remain somewhat similar to the case where $p=100$.  The selection 
+probability of $x_{4}$ is lower than it was in the case of $p=100$, however, the selection probabilities
+were overall lower in the simulation.
+\begin{table}[hc]
+\centering
+\caption{Results of Simulation for $p=1000$}
+\begin{tabular}{lll}
+Feature&Avg VIM& Probability of Selection\\
+\hline
+$x_{1}$  & .023 & .70\\
+$x_{2}$  & .007 & .22\\
+$x_{3}$ & .004 &  .11\\
+$x_{4}$  & .000 &  .01\\
+$x_{901}$ & .032 & 1.0\\
+$x_{902}$ & .026 & .82\\
+$x_{903}$ & .003 & .08\\
+$x_{904}$ & .000 & 0.0
+\end{tabular}
+\end{table}
 
 
-  
-
-
-
-
-
-
-     
-
-
-
-     
-    
+\clearpage    
 
 \bibliography{RFrefs}
 \end{document}
