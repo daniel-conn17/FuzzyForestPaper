@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.5.30)  29 JAN 2015 20:05
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.5.30)  29 JAN 2015 20:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -572,27 +572,27 @@ Overfull \hbox (10.94998pt too wide) has occurred while \output is active
 
 [10])
 LaTeX Font Info:    Font shape `T1/pzc/m/n' in size <13> not available
-(Font)              Font shape `T1/pzc/mb/it' tried instead on input line 433.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 433.
+(Font)              Font shape `T1/pzc/mb/it' tried instead on input line 432.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 432.
 
 Overfull \hbox (10.94998pt too wide) has occurred while \output is active
 [] \T1/aer/m/n/10.95 11
  []
 
 [11]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 433.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 432.
  (./ConnRamirezFuzzyForests.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 433.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 433.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 432.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 432.
 Package rerunfilecheck Info: File `ConnRamirezFuzzyForests.out' has not changed
 .
 (rerunfilecheck)             Checksum: B3847C63C5DC4CFAADCD39CAAA9AB027;1359.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 433.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 432.
  ) 
 Here is how much of TeX's memory you used:
  7799 strings out of 493315
  112222 string characters out of 6137904
- 196969 words of memory out of 5000000
+ 195969 words of memory out of 5000000
  11031 multiletter control sequences out of 15000+600000
  56632 words of font info for 99 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
@@ -619,7 +619,7 @@ t/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2013/texmf-dist
 /fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2013/texmf-dist/
 fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2013/texmf-d
 ist/fonts/type1/urw/zapfchan/uzcmi8a.pfb>
-Output written on ConnRamirezFuzzyForests.pdf (11 pages, 310371 bytes).
+Output written on ConnRamirezFuzzyForests.pdf (11 pages, 310364 bytes).
 PDF statistics:
  273 PDF objects out of 1000 (max. 8388607)
  233 compressed objects within 3 object streams

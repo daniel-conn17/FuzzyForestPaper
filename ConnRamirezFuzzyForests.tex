@@ -352,7 +352,7 @@ ones.   Although this bias is much reduced in comparison to random forests.
 \begin{table}[hc]
 \centering
 \caption{Results of Simulation for $p=100$}
-\begin{tabular}{lll}
+\begin{tabular}{lclcl}
 Feature&Avg VIM& Probability of Selection\\
 \hline
 $x_{1}$  & .058 &  .75\\
@@ -381,10 +381,8 @@ were overall lower in the simulation.
 \begin{table}[hc]
 \centering
 \caption{Results of Simulation for $p=1000$}
-\begin{tabular}{lll}
-\multicolumn{3}{c}{Fuzzy Forests} \\
-\hline
-Feature&Avg VIM& Probability of Selection\\
+\begin{tabular}{lclc|}
+Feature & Avg VIM & Probability of Selection\\
 \hline
 $x_{1}$  & .023 & .70\\  
 $x_{2}$  & .007 & .22\\
@@ -396,6 +394,7 @@ $x_{903}$ & .003 & .08\\
 $x_{904}$ & .000 & 0.0
 \end{tabular}
 \end{table}
+
 \section{Applications}
 We demonstrate a typical analysis by using \pkg{fuzzyforest} to discover how various immunologic profiles 
 determine how HIV-infected patients respond to antiretroviral therapy.  In this particular analysis,
