@@ -5,45 +5,45 @@ The style file: jss.bst
 Database file #1: RFrefs.bib
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Warning--empty journal in zhu2012reinforcement
-You've used 8 entries,
+You've used 10 entries,
             3140 wiz_defined-function locations,
-            680 strings with 6420 characters,
-and the built_in function-call counts, 7130 in all, are:
-= -- 573
-> -- 207
-< -- 3
-+ -- 79
-- -- 69
-* -- 610
-:= -- 971
-add.period$ -- 31
-call.type$ -- 8
-change.case$ -- 55
-chr.to.int$ -- 8
-cite$ -- 9
-duplicate$ -- 659
-empty$ -- 651
-format.name$ -- 95
-if$ -- 1433
+            689 strings with 6673 characters,
+and the built_in function-call counts, 8522 in all, are:
+= -- 684
+> -- 236
+< -- 5
++ -- 90
+- -- 78
+* -- 713
+:= -- 1163
+add.period$ -- 38
+call.type$ -- 10
+change.case$ -- 66
+chr.to.int$ -- 10
+cite$ -- 11
+duplicate$ -- 796
+empty$ -- 790
+format.name$ -- 110
+if$ -- 1720
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 98
-newline$ -- 50
-num.names$ -- 32
-pop$ -- 222
+missing$ -- 119
+newline$ -- 60
+num.names$ -- 40
+pop$ -- 270
 preamble$ -- 1
-purify$ -- 55
+purify$ -- 66
 quote$ -- 0
-skip$ -- 140
+skip$ -- 177
 stack$ -- 0
-substring$ -- 611
-swap$ -- 220
+substring$ -- 716
+swap$ -- 263
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 72
+type$ -- 87
 warning$ -- 1
-while$ -- 55
+while$ -- 65
 width$ -- 0
-write$ -- 110
+write$ -- 135
 (There was 1 warning)

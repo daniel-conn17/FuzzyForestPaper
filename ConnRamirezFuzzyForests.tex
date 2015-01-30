@@ -8,7 +8,7 @@
 \usepackage{amsthm}
 
 %% almost as usual
-\author{Daniel Conn\\ UCLA SPH, Biostatistics \AND Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \AND  Gang Li\\UCLA SPH, Biostatistics \And Christina Ramirez\\UCLA SPH, Biostatistics}
+\author{Daniel Conn\\ UCLA SPH, Biostatistics \AND Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \AND  Gang Li\\UCLA SPH, Biostatistics \And Christina M. Ramirez\\UCLA SPH, Biostatistics}
 \title{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for Correlated, High-Dimensional Data}
 
 %% for pretty printing and a nice hypersummary also set:
@@ -70,28 +70,29 @@ Random forests is a popular ensemble based machine learning algorithm.  While ra
 importance of features in settings where the features are independent, it is well-known that random forests VIMs are biased when features are correlated
 with one another (\citep{strobl2007bias}; \citep{strobl2008conditional}; \citep{nicodemus2009predictor}).
 
-Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between groups is low.  We then use an iterative feature selection algorithm to select the most important
-features from each.  A random forest is then fit to the features that have survived this first round.  A final iterative random forest,  combining features from all
+Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between modules is low.  We then use an iterative feature selection algorithm as in \citep{diaz2006gene} to select the most important
+features from each module.  A random forest is then fit to the features that have survived this first round.  A final iterative random forest,  combining features from all
 modules, selects the top $k$ features. 
 
 There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
               
 The article is organized as follows.  In section 2 of this article, we briefly review the random forests, WGCNA, and introduce the fuzzy forests algorithm.
-In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we conduct simulations to comparing fuzzy forests to both random forests and conditional inference forests (CIFs).  We demonstrate that fuzzy forests has performance comparable to that of CIFs' although at much lower computational cost.  In section 5, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 6 ends the article with a discussion and summary of our results. 
+In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we conduct simulations comparing fuzzy forests to random forests.  In section 5, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 6 ends the article with a discussion and summary of our results. 
 
 \section{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
-In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed iid.
-pairs $(X,Y) \sim G$.  Here $X$ is $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the the $i$th subject will be denoted by $X_{i}^{(v)}$.
-The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Finally, let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be set of values for feature $v$ across
+In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed iid
+pairs $(X,Y) \sim G$.  Here $X$ is a $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the $i$th subject will be denoted by $X_{i}^{(v)}$.
+The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Finally, let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be the set of values for feature $v$ across
 all $n$ subjects.
 
-In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$ and we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are $iid$ with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
-In classification, $Y$ is restricted to take the value 0 or 1.  
+In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$.
+In the case of regression, we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are $iid$ with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
+In classification, $Y$ is restricted to take the value 0 or 1 and $Y|X$ is a Bernoulli trial with mean $E[Y|X]$.  
 
 If the goal is to predict a new outcome $Y$ based off of measurements, $X$, a good estimate of $f(X)$ is all that is required.
 We are interested in more than prediction.  We are interested in understanding how $f(X)$ changes as function of particular features. 
-If the value of $f(X)$ varies widely according to a particular value of the $v$th feature, $X^{(v)}$ is, in some sense, an ``important" in determinant of
+If the value of $f(X)$ varies widely according to a particular value of the $v$th feature, $X^{(v)}$ is, in some sense, an ``important" determinant of
 the outcome, $Y$.  
 
 If $p$ is low dimensional $(p=1,2)$, we can simply plot our estimate of $f(X)$ to understand how it varies as function of $X$. 
@@ -107,13 +108,14 @@ not observed.  Even if all appropriate features are measured, $f_{\beta}(X)$ may
 If $f_{\beta}(X)$ is a linear regression model, $\sum_{v=1}^{p}\beta_{v}X^{(v)}$, the true $f(X)$ may be nonlinear in such a way that this best linear approximation fails to capture.
   
 Permutation VIMs provide a means of summarizing the importance of individual features without making parametric assumptions.
-We define the permutation VIM of feature $v$, $X^{(v)}$, as 
+In the case of regression, we define the permutation VIM of feature $v$, $X^{(v)}$, as 
 \begin{equation}
 VIM(v)=E(f(X^{(1)}_{i},\ldots,X^{(v)}_{i},\ldots,X^{(p)}_{i}) - f(X^{(1)}_{i},\ldots,\tilde{X}^{(v)}_{i},\ldots,X^{(p)}_{i}))^{2}.
 \end{equation}
 Here, $X^{(v)}_{i}$ and $\tilde{X}^{(v)}_{i}$ are iid with distribution $G_{X^{(v)}}$ where $G_{X^{(v)}}$ is the marginal distribution of $X^{(v)}_{i}$.  This form of the VIM
-is given in a slightly different form in \citep{gregorutti2013correlation} and \citep{zhu2012reinforcement}.  These authors also discuss conditions under
-which the estimate of the permutation VIM derived from random forests is consistent. 
+is given in a slightly different form in \cite{gregorutti2013correlation} and \cite{zhu2012reinforcement}.
+\cite{gregorutti2013correlation} present a similar expression for the case of classification.  
+These authors also discuss conditions under which the estimate of the permutation VIM derived from random forests is consistent. 
 
          
 \subsection{An Introduction to Random Forests}[2.2]
@@ -136,7 +138,7 @@ In the case of classification  $\left\lfloor p/3 \right\rfloor$ is common choice
 Random forest VIMs are obtained by testing how predictive accuracy suffers when the values of individual predictors are permuted.  Let $OOB_{k} \subset \{1,\ldots, n\}$ 
 be the out of bag samples in the $k$th bootstrap sample.  Let $\pi_{k}$ be a random permutation of the elements of $OOB_{k}$ and let   
 $\pi_{k}^{(v)}(X_{i}) = (X_{i}^{(1)},\ldots,X_{\pi_{k}(i)}^{(v)},\ldots,X_{i}^{(p)}),$ where $i \in OOB_{k}$.   In other words, $\pi_{k}^{(v)}$ 
-permutes the values of the $v$th feature across all out of bag subjects.  The variable importance of the $i$th feature from the $k$th tree is defined as
+permutes the values of the $v$th feature across all out of bag subjects.  In the case of regression, the variable importance of the $i$th feature from the $k$th tree is defined as
 \begin{equation}
 \widehat{VIM}^{k}(v)= \frac{\sum_{i \in OOB_{k}}(y_{i}-\hat{f}^{k}(\pi_{k}^{(v)}(X_{i}))^{2} - (y_{i} - \hat{f}^{k}(X_{i}))^{2}}{|OOB_{k}|}
 \end{equation}
@@ -148,37 +150,41 @@ The variable importance for the entire random forest is defined as
 \subsection{A Brief Review of WGCNA}[2.3]
 WGCNA is a rigorous framework for constructing a network of features. 
 This network is then used to determine clusters or modules of inter-related features. 
-We briefly review the steps of a WGCNA network analysis.  The user first specifies a similarity function $s_{ij}=S(X^{(i)},X^{(j)})$ taking
-values between 0 and 1.  Both unsigned and signed networks are possible.  If the features are continuous, the most common choice 
-of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or $\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is unsigned or 
-signed.
+We briefly review the steps of a WGCNA network analysis.  Our review closely follows that of \cite{zhang2005general}.  
+The user first specifies a similarity function $s_{ij}=S(X^{(i)},X^{(j)})$ taking values between 0 and 1.  Both unsigned and signed 
+networks are possible.  If the features are continuous, the most common choice of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or 
+$\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is unsigned or signed \citep{zhang2005general}.
 
-This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  This adjacency function determines how the adjacency function
-translates into network adjacencies.  The simplest choice of adjacency function is the $signum(s_{ij},\tau)$ function.  This function
-simply sets a hard threshold $\tau$.  If $s_{ij} \geq \tau, a_{ij}=signum(s_{ij},\tau)=1$ otherwise $a_{ij}=0$.  Nodes are either connected or 
-un-connected if the $signum$ adjacency function is used.  In practice, a soft-thresholded network is often more plausible than a 
+This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  This adjacency function determine how similarities translate
+into properties of the network.  For example, in a hard-thresholded network, where nodes are either connected or unconnected,
+the adjacency function determines how high the correlation has to be in order for two nodes to be connected.
+
+This hard threshold function, denoted by $signum(s_{ij},\tau)$,  is the simplest choice of adjacency function.   
+If $s_{ij} \geq \tau, a_{ij}=signum(s_{ij},\tau)=1$ otherwise $a_{ij}=0$.  Nodes are either connected or 
+unconnected if the $signum$ adjacency function is used.  In practice, a soft-thresholded network is often more plausible than a 
 hard-thresholded one.  The power function $a_{ij}=s_{ij}^{q}$ is common choice of soft-thresholding adjacency function.  Large values
-of $q$ yield behavior closer to a hard-thresholded network.  Once an adjacency function is calculated, an hierarchical clustering tree algorithm 
-may be used to define clusters of features.
+of $q$ yield behavior closer to a hard-thresholded network.  Setting $q=1$ is equivalent to using the similarity function.
+Once an adjacency function is calculated, a hierarchical clustering tree algorithm 
+is used to define clusters of features.
 
 It is common to apply this hierarchical clustering algorithm to the topological overlap matrix rather than the adjacency matrix.  The topological
 overlap between two nodes is defined as 
 \begin{equation}
 \omega_{ij} = \frac{l_{ij} + a_{ij}}{min\{k_{i},k_{j}\} + 1 - a_{ij}}
 \end{equation} 
-where $l_{ij}=\sum_{u}a_{iu}a_{uj}$ and $k_{i}=\sum_{u}a_{iu}$.  The topological overlap between two nodes can be high even if $a_{ij}$ is low.
+where $l_{ij}=\sum_{u}a_{iu}a_{uj}$ and $k_{i}=\sum_{u}a_{iu}$\citep{horvath2011weighted}.  The topological overlap between two nodes can be high even if $a_{ij}$ is low.
 This occurs when the two nodes are strongly connected to the same set of nodes.  Use of topological overlap rather
-than the adjacencies may lead to more distinct modules.
+than the adjacencies may lead to more distinct modules\citep{zhang2005general}.
 
 In many biological contexts, it is suspected that only a few features are highly connected.  This prior knowledge leads to the scale-free criterion for
 determining which value of $q$ to select.  A network is said to have a generalized scale-free topology if $p(k) \sim k^{\gamma}$ or
- $\log_{10}(p(k)) \propto \log_{10}(k)$.  This suggests that one should select a smaller value of $q$ such that the $R^{2}$ between 
+ $\log_{10}(p(k)) \propto \log_{10}(k)$\citep{zhang2005general}.  This suggests that one should select a smaller value of $q$ such that the $R^{2}$ between 
   $\log_{10}(p(k))$ and $\log_{10}(k)$ is high.
   
 \subsection{The Fuzzy Forests Algorithm}[2.4]
 The fuzzy forests algorithm is an extension of random forests designed to obtain less biased variable importance rankings in the presence
-of correlated features.  In following section, we describe the motivation behind fuzzy forests and explain why it should 
-provide less biased estimates of VIMs.  In this section, we describe the algorithm.
+of correlated features.  In following section, we describe the motivation behind fuzzy forests and explain why it
+provides less biased estimates of VIMs.  In this section, we describe the algorithm.
 
 The fuzzy forests algorithm can be subdivided into two steps: a screening step and a selection step.  The screening step works in a piecewise fashion
 to screen out unimportant features.  The screening step takes as input a partition of the features such that the correlation within each partition is 
@@ -247,8 +253,9 @@ by fitting a single random forests.  The assumptions of additivity across module
 
 The fuzzy forests algorithm relaxes these overly restrictive assumptions.  Fuzzy forests allows for interactions between features that
 were found to be important within modules.  In biological applications, modules might represent different biological systems.
-thus, it is reasonable to allow these systems to interact with one another.  In fuzzy forests, the selection step acts as a screening mechanism.
-Fuzzy forests is implicitly making the assumption that the features that have high VIMs.   
+Thus, it is reasonable to allow these systems to interact with one another.  In fuzzy forests, the selection step acts as a screening mechanism.
+Fuzzy forests is implicitly making the assumption that the features that have high VIMs within modules are also most likely to be the features
+involved in interactions across modules.   
 
 It is important that iterative random forests are used at the selection step.  When features from separate modules are combined,
 the potential for bias due to correlation between features is re-introduced.  The iterative random forests, in practice, manage to
@@ -314,8 +321,8 @@ Note that these models will not necessarily be nested.
 The generic function \code{plot} yields a visual display of which modules are important.  The grey bars
 represent what percentage of the total $p$ features fall into a particular module.  The blue bars represent
 the percentage of selected features that fall into each module.  Applying the function \code{plot} to the
-object \code{fit} above, we obtain the following graph.
-\begin{figure}[c]
+object \code{fit} above, we obtain the graph in figure 1.
+\begin{figure}[hc]
 \caption{Result of \code{plot(fit)}}
 \includegraphics{ch3plot}
 \end{figure}
@@ -326,9 +333,8 @@ was $n=1000$.  We let the number of features equal $p=100$ and $1000$.
 For each simulation, we carried out 100 simulations.  In each simulation, the number of features selected
 was 10.    
 
-Modules were generated using the function \code{simulateModule} from \pkg{WGCNA}.
-In the case, where $p=100$ there are 3 modules each of size 25.  The features were multivariate
-normal.  Each feature had variance 1.  The correlation within each module was .8.  The modules were independent of one 
+In the case, where $p=100$ there are 3 modules each of size 25.  The features were generated from a multivariate
+normal distribution.  Each feature had variance 1.  The correlation within each module was 0.8.  The modules were independent of one 
 another and there were an additional 25 features that were independent of each other and independent of each module.  
 
 The true regression function is of the form $\log(p_{i}/(1-p_{i}))=X_{i}'\beta$ where $p_{i}$ is probability that
@@ -340,8 +346,7 @@ subject $i$ has outcome 1.   For the case when $p=100$,  the first 3 features ar
 where $x_{1}, x_{2}$ and $x_{3}$ are highly correlated and $ x_{76}, x_{77}$, and $x_{78}$ are independent.
 
 We present below the results of fuzzy forests on 100 simulated data sets.  In addition to presenting the VIMs
-for the significant predictors, we also present the VIMs for $x_{4}$ and $x_{79}$.  Note that fuzzy forests was
-able to detect the 4 most important features: $x_{1}, x_{2}, x_{76},$ and $x_{77}$.  The simulation also 
+for the significant predictors, we also present the VIMs for $x_{4}$ and $x_{79}$.  The simulation 
 demonstrates fuzzy forests still has a tendency to select unimportant features that are correlated with important 
 ones.   Although this bias is much reduced in comparison to random forests.
 \begin{table}[hc]
@@ -377,9 +382,11 @@ were overall lower in the simulation.
 \centering
 \caption{Results of Simulation for $p=1000$}
 \begin{tabular}{lll}
+\multicolumn{3}{c}{Fuzzy Forests} \\
+\hline
 Feature&Avg VIM& Probability of Selection\\
 \hline
-$x_{1}$  & .023 & .70\\
+$x_{1}$  & .023 & .70\\  
 $x_{2}$  & .007 & .22\\
 $x_{3}$ & .004 &  .11\\
 $x_{4}$  & .000 &  .01\\
@@ -389,9 +396,38 @@ $x_{903}$ & .003 & .08\\
 $x_{904}$ & .000 & 0.0
 \end{tabular}
 \end{table}
+\section{Applications}
+We demonstrate a typical analysis by using \pkg{fuzzyforest} to discover how various immunologic profiles 
+determine how HIV-infected patients respond to antiretroviral therapy.  In this particular analysis,
+we wish to identify novel immunologic signatures that are predictive of whether a patient will be an immunologic
+responder or an immunologic non-responder.
 
+An immunologic non-responder is a patient on antiretroviral therapy with undetectable levels of the virus (< 50 copies\/ml)
+whose CD4+ T cell counts nevertheless remain low (<350 cells\/mm3).  Similarly, an immunologic responder is an aviremic
+patient with undetectable levels of the virus and CD4+ T cell counts above 350 cells/mm3. 
 
-\clearpage    
+The features 
+  
+
+\section{Discussion}
+In this paper we have presented the fuzzy forests algorithm as an extension of random forests that can provide less biased feature selection in 
+ the presence of correlation between features.  We discussed conditions under which fuzzy forests is expected
+ to outperform random forests.  We carried out simulations demonstrating    
+ 
+ We also introduced an implementation of fuzzy forests in the \pkg{fuzzyforest} package.  
+ The \pkg{fuzzyforest} package has two implementations of fuzzy forests.  The first implementation, \code{WGCNA_fuzzyforest} automatically 
+ carries out WGCNA to partition the features into separate modules.  These modules are then used by the fuzzy forests algorithm for feature selection.
+ The second implementation, \code{fuzzyforest} lets the user determine how features should be partitioned before the fuzzy forests algorithm is used 
+ for feature selection.  
+ 
+We then used fuzzy forests to investigate how immunologic profiles determine a patient's response to HART.
+ In this analysis, we took a hands-on approach to determining how the set of features
+ should be partitioned.  We used the scale free topology to determine the power $q$ of the adjacency function.
+ We also attempted to understand the biological significance of the resulting modules.
+ Then we used the \code{fuzzyforest} function for feature selection.         
+ 
+\section*{Acknowledgements}
+This work was partially funded by NSF IIS 1251151.
 
 \bibliography{RFrefs}
 \end{document}
