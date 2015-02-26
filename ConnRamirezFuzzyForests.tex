@@ -19,8 +19,8 @@
 %% an abstract and keywords
 \Abstract{In this paper we introduce fuzzy forests, a new machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
  problems.  Fuzzy forests is specifically designed to provide unbiased rankings of variable importance in the presence of correlated features. 
-Fuzzy forests uses Weighted Gene Coexpressionn Network Analysis (WGCNA) to detect groups of highly correlated features.  Unbiased rankings are
-obtained by fitting separate random forests on each module.  We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforests}.}
+Fuzzy forests uses Weighted Gene Coexpression Network Analysis (WGCNA) to detect groups of highly correlated features.  Unbiased rankings are
+obtained by fitting separate random forests on each module.  We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforest}.}
 \Keywords{Random Forests, WGCNA, machine learning,\proglang{R}}
 \Plainkeywords{Random Forests, WGCNA, machine learning,R} %% without formatting
 %% at least one keyword must be supplied
@@ -330,8 +330,8 @@ object \code{fit} above, we obtain the graph in figure 1.
 In this section we demonstrate the performance of fuzzy forests on a number of simulated data sets.
 Our first set of simulations assumes a logistic regression model.  In all simulations, the sample size
 was $n=1000$.  We let the number of features equal $p=100$ and $1000$.
-For each simulation, we carried out 100 simulations.  In each simulation, the number of features selected
-was 10.    
+For each simulation we carried out 100 simulations.  In each simulation, the number of features selected
+was 10.  For each simulation, we also fit random forests 100 times.   
 
 In the case, where $p=100$ there are 3 modules each of size 25.  The features were generated from a multivariate
 normal distribution.  Each feature had variance 1.  The correlation within each module was 0.8.  The modules were independent of one 
@@ -348,21 +348,23 @@ where $x_{1}, x_{2}$ and $x_{3}$ are highly correlated and $ x_{76}, x_{77}$, an
 We present below the results of fuzzy forests on 100 simulated data sets.  In addition to presenting the VIMs
 for the significant predictors, we also present the VIMs for $x_{4}$ and $x_{79}$.  The simulation 
 demonstrates fuzzy forests still has a tendency to select unimportant features that are correlated with important 
-ones.   Although this bias is much reduced in comparison to random forests.
-\begin{table}[hc]
+ones.   
+\begin{table}
 \centering
 \caption{Results of Simulation for $p=100$}
-\begin{tabular}{lclcl}
-Feature&Avg VIM& Probability of Selection\\
+\begin{tabular}[bc]{c c c | c c c}
 \hline
-$x_{1}$  & .058 &  .75\\
-$x_{2}$  & .023 &  .32\\
-$x_{3}$  & .014 &  .21\\
-$x_{4}$ & .007 &  .10\\
-$x_{76}$ & .074 & 1.0\\
-$x_{77}$ & .062 & .83 \\
-$x_{78}$ & .001 & .14 \\
-$x_{79}$ & .000 & 0.0
+\multicolumn{3}{c|}{Fuzzy Forests} & \multicolumn{3}{c}{Random Forests}\\
+Feature&Avg VIM& Probability of Selection & Feature & Avg VIM & Probability of Selection\\
+\hline
+$x_{1}$  & .058 &  .75  & $x_{1}$ & .010 & .98\\
+$x_{2}$  & .023 &  .32 & $x_{2}$ & .004 & .57\\
+$x_{3}$  & .014 &  .21 & $x_{3}$ & .002 & .26\\
+$x_{4}$ & .007 &  .10 & $x_{4}$ & .001 & .12\\
+$x_{76}$ & .074 & 1.0 & $x_{76}$ & .009 & .94\\
+$x_{77}$ & .062 & .83 & $x_{77}$ & .005 & .64\\
+$x_{78}$ & .001 & .14 & $x_{78}$ & .002 & .26\\
+$x_{79}$ & .000 & 0.0 & $x_{79}$ & .000 & 0
 \end{tabular}
 \end{table}
 
@@ -378,43 +380,78 @@ addition to the significant ones. Note that the VIMs are at an overall lower lev
 of the most significant features remain somewhat similar to the case where $p=100$.  The selection 
 probability of $x_{4}$ is lower than it was in the case of $p=100$, however, the selection probabilities
 were overall lower in the simulation.
-\begin{table}[hc]
+\begin{table}
 \centering
 \caption{Results of Simulation for $p=1000$}
-\begin{tabular}{lclc|}
-Feature & Avg VIM & Probability of Selection\\
+\begin{tabular}[bc]{c c c | c c c}
 \hline
-$x_{1}$  & .023 & .70\\  
-$x_{2}$  & .007 & .22\\
-$x_{3}$ & .004 &  .11\\
-$x_{4}$  & .000 &  .01\\
-$x_{901}$ & .032 & 1.0\\
-$x_{902}$ & .026 & .82\\
-$x_{903}$ & .003 & .08\\
-$x_{904}$ & .000 & 0.0
+\multicolumn{3}{c|}{Fuzzy Forests} & \multicolumn{3}{c}{Random Forests}\\
+Feature & Avg VIM & Probability of Selection & Feature & Avg VIM & Probability of Selection\\
+\hline
+$x_{1}$  & .023 & .70 & $x_{1}$ & .006 & .99\\  
+$x_{2}$  & .007 & .22 & $x_{2}$ & .002 & .66\\
+$x_{3}$ & .004 &  .11 & $x_{3}$ & .001 & .31\\
+$x_{4}$  & .000 &  .01 & $x_{4}$ & .000 & .08\\
+$x_{901}$ & .032 & 1.0 & $x_{901}$ & .005 & .94\\
+$x_{902}$ & .026 & .82 & $x_{902}$ & .000 & .00\\
+$x_{903}$ & .003 & .08 & $x_{903}$ & .000 & .00\\
+$x_{904}$ & .000 & 0.0 & $x_{904}$ & .000 & .00
 \end{tabular}
 \end{table}
 
 \section{Applications}
-We demonstrate a typical analysis by using \pkg{fuzzyforest} to discover how various immunologic profiles 
-determine how HIV-infected patients respond to antiretroviral therapy.  In this particular analysis,
-we wish to identify novel immunologic signatures that are predictive of whether a patient will be an immunologic
-responder or an immunologic non-responder.
+We demonstrate a typical analysis by using \pkg{fuzzyforest} to discover immunologic profiles 
+that predict how an HIV-infected patients responds to antiretroviral therapy.  
+The subjects in the study were enrolled in either the Options Project or the SCOPE project, both longitudinal cohorts based at the University of California, San Francisco (UCSF).
+In this particular analysis, we wish to identify novel immunologic signatures that are predictive of whether a patient will be an immunologic
+responder or an immunologic non-responder.  
 
-An immunologic non-responder is a patient on antiretroviral therapy with undetectable levels of the virus (< 50 copies\/ml)
-whose CD4+ T cell counts nevertheless remain low (<350 cells\/mm3).  Similarly, an immunologic responder is an aviremic
-patient with undetectable levels of the virus and CD4+ T cell counts above 350 cells/mm3. 
+An immunologic non-responder is a patient on antiretroviral therapy with undetectable levels of the virus (< 50 copies/ml)
+whose CD4+ T cell counts nevertheless remain low (<350 cells/mm3).  Similarly, an immunologic responder is an aviremic
+patient with undetectable levels of the virus and CD4+ T cell counts above 350 cells/mm3.   There were 59 immunologic
+non-responders and 142 immunologic responders in the data set.
 
-The features 
-  
+The features are derived flow cytometry, measuring T cell maturation, activation, dysfunction, senescence, antigen-specificity
+and proliferation.  Because many of the flow cytometry parameters are highly correlated we used WGCNA to identify
+modules within the feature space.  We used the scale-free topology criterion to determine the power of the adjacency function
+and set $q=7$.  A heatmap displays the module correlation structure of the feature space.
+\begin{figure}[hc]
+\caption{Module Correlation Structure}
+\includegraphics{HeatMap.pdf}
+\end{figure}
+We found 10 modules.  The largest module was of size 27.  The smallest module was of size 9.
+ 
+ We used the resulting modules memberships as input to the function \code{fuzzyforest}.
+Because of the small size of the modules we set \code{keep_fraction} to 0.25.  We tested out multiple
+values of for \code{number_selected}.  The ranking of features was robust to settings of this
+parameter.   We display the results when selecting 5 features.
+\begin{table}
+\centering
+\caption{Results of Fuzzy Forests Algorithm}
+\begin{tabular}[h]{c c}
+Feature & VIM\\
+\hline
+4pPD1p & .056\\
+4pR5n38nDRnPD1P & .0273\\
+4pR5n38nDRpPD1p & .020\\
+3p4pRAnR7nR5n38nDRpPD1p & .018\\
+4pRApR7n & .018
+\end{tabular}
+\end{table}
+
+One of the strongest predictors of immunologic non-response was PD-1 expression on CD4+ T cells.
+This replicates findings from earlier work \cite{hunt2008relationship}.  PD-1 expression was evident across many cell types, 
+especially in effector T cells.  Non-responders also had higher percentages of cells that expressed
+HLA-DR.  
+
 
 \section{Discussion}
 In this paper we have presented the fuzzy forests algorithm as an extension of random forests that can provide less biased feature selection in 
  the presence of correlation between features.  We discussed conditions under which fuzzy forests is expected
- to outperform random forests.  We carried out simulations demonstrating    
+ to outperform random forests.  We carried out simulations comparing random forests to fuzzy forests.     
  
  We also introduced an implementation of fuzzy forests in the \pkg{fuzzyforest} package.  
- The \pkg{fuzzyforest} package has two implementations of fuzzy forests.  The first implementation, \code{WGCNA_fuzzyforest} automatically 
+ The \pkg{fuzzyforest} package has two function for fitting the fuzzy forests algorithm.  The first implementation, \code{WGCNA_fuzzyforest} automatically 
  carries out WGCNA to partition the features into separate modules.  These modules are then used by the fuzzy forests algorithm for feature selection.
  The second implementation, \code{fuzzyforest} lets the user determine how features should be partitioned before the fuzzy forests algorithm is used 
  for feature selection.  
