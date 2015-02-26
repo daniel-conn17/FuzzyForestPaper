@@ -1,0 +1,82 @@
+\begin{thebibliography}{11}
+\newcommand{\enquote}[1]{``#1''}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi:\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{doi:\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem[{Breiman(2001)}]{breiman2001random}
+Breiman L (2001).
+\newblock \enquote{Random Forests.}
+\newblock \emph{Machine learning}, \textbf{45}(1), 5--32.
+
+\bibitem[{D{\'\i}az-Uriarte and De~Andres(2006)}]{diaz2006gene}
+D{\'\i}az-Uriarte R, De~Andres SA (2006).
+\newblock \enquote{Gene Selection and Classification of Microarray Data Using
+  Random Forest.}
+\newblock \emph{BMC bioinformatics}, \textbf{7}(1), 3.
+
+\bibitem[{Gregorutti \emph{et~al.}(2013)Gregorutti, Michel, and
+  Saint-Pierre}]{gregorutti2013correlation}
+Gregorutti B, Michel B, Saint-Pierre P (2013).
+\newblock \enquote{Correlation and Variable Importance in Random Forests.}
+\newblock \emph{arXiv preprint arXiv:1310.5726}.
+
+\bibitem[{Horvath(2011)}]{horvath2011weighted}
+Horvath S (2011).
+\newblock \emph{Weighted Network Analysis: Applications in Genomics and Systems
+  Biology}.
+\newblock Springer.
+
+\bibitem[{Hunt \emph{et~al.}(2008)Hunt, Brenchley, Sinclair, McCune, Roland,
+  Shafer, Hsue, Emu, Krone, Lampiris \emph{et~al.}}]{hunt2008relationship}
+Hunt PW, Brenchley J, Sinclair E, McCune JM, Roland M, Shafer KP, Hsue P, Emu
+  B, Krone M, Lampiris H, \emph{et~al.} (2008).
+\newblock \enquote{Relationship Between T Cell Activation and CD4+ T Cell Count
+  in HIV-Seropositive Individuals with Undetectable Plasma HIV RNA Levels in
+  the Absence of Therapy.}
+\newblock \emph{Journal of Infectious Diseases}, \textbf{197}(1), 126--133.
+
+\bibitem[{Nicodemus and Malley(2009)}]{nicodemus2009predictor}
+Nicodemus KK, Malley JD (2009).
+\newblock \enquote{Predictor correlation impacts machine learning algorithms:
+  implications for genomic studies.}
+\newblock \emph{Bioinformatics}, \textbf{25}(15), 1884--1890.
+
+\bibitem[{Raskutti \emph{et~al.}(2010)Raskutti, Wainwright, and
+  Yu}]{raskutti2010restricted}
+Raskutti G, Wainwright MJ, Yu B (2010).
+\newblock \enquote{Restricted Eigenvalue Properties for Correlated Gaussian
+  Designs.}
+\newblock \emph{The Journal of Machine Learning Research}, \textbf{11},
+  2241--2259.
+
+\bibitem[{Strobl \emph{et~al.}(2008)Strobl, Boulesteix, Kneib, Augustin, and
+  Zeileis}]{strobl2008conditional}
+Strobl C, Boulesteix AL, Kneib T, Augustin T, Zeileis A (2008).
+\newblock \enquote{Conditional Variable Importance for Random Forests.}
+\newblock \emph{BMC bioinformatics}, \textbf{9}(1), 307.
+
+\bibitem[{Strobl \emph{et~al.}(2007)Strobl, Boulesteix, Zeileis, and
+  Hothorn}]{strobl2007bias}
+Strobl C, Boulesteix AL, Zeileis A, Hothorn T (2007).
+\newblock \enquote{Bias in Random Forest Variable Importance Measures:
+  Illustrations, Sources and a Solution.}
+\newblock \emph{BMC bioinformatics}, \textbf{8}(1), 25.
+
+\bibitem[{Zhang and Horvath(2005)}]{zhang2005general}
+Zhang B, Horvath S (2005).
+\newblock \enquote{A General Framework for Weighted Gene Co-Expression Network
+  Analysis.}
+\newblock \emph{Statistical applications in genetics and molecular biology},
+  \textbf{4}(1).
+
+\bibitem[{Zhu \emph{et~al.}(2012)Zhu, Zeng, and Kosorok}]{zhu2012reinforcement}
+Zhu R, Zeng D, Kosorok MR (2012).
+\newblock \enquote{Reinforcement Learning Trees.}
+
+\end{thebibliography}

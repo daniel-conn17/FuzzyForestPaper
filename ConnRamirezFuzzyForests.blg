@@ -1,48 +1,49 @@
 This is BibTeX, Version 0.99d (TeX Live 2013)
 Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: ConnRamirezFuzzyForests.aux
-I found no \citation commands---while reading file ConnRamirezFuzzyForests.aux
-I found no \bibdata command---while reading file ConnRamirezFuzzyForests.aux
-I found no \bibstyle command---while reading file ConnRamirezFuzzyForests.aux
-You've used 0 entries,
-            0 wiz_defined-function locations,
-            83 strings with 520 characters,
-and the built_in function-call counts, 0 in all, are:
-= -- 0
-> -- 0
-< -- 0
-+ -- 0
-- -- 0
-* -- 0
-:= -- 0
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
-chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 0
-format.name$ -- 0
-if$ -- 0
-int.to.chr$ -- 0
-int.to.str$ -- 0
-missing$ -- 0
-newline$ -- 0
-num.names$ -- 0
-pop$ -- 0
-preamble$ -- 0
-purify$ -- 0
+The style file: jss.bst
+Database file #1: RFrefs.bib
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Warning--empty journal in zhu2012reinforcement
+You've used 11 entries,
+            3140 wiz_defined-function locations,
+            696 strings with 7127 characters,
+and the built_in function-call counts, 10486 in all, are:
+= -- 840
+> -- 326
+< -- 5
++ -- 124
+- -- 111
+* -- 908
+:= -- 1433
+add.period$ -- 42
+call.type$ -- 11
+change.case$ -- 80
+chr.to.int$ -- 11
+cite$ -- 12
+duplicate$ -- 961
+empty$ -- 957
+format.name$ -- 146
+if$ -- 2116
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 140
+newline$ -- 65
+num.names$ -- 44
+pop$ -- 310
+preamble$ -- 1
+purify$ -- 80
 quote$ -- 0
-skip$ -- 0
+skip$ -- 195
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
+substring$ -- 928
+swap$ -- 312
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 0
-warning$ -- 0
-while$ -- 0
+type$ -- 96
+warning$ -- 1
+while$ -- 81
 width$ -- 0
-write$ -- 0
-(There were 3 error messages)
+write$ -- 148
+(There was 1 warning)
