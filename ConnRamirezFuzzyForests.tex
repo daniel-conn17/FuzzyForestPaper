@@ -70,9 +70,8 @@ Random forests is a popular ensemble based machine learning algorithm.  While ra
 importance of features in settings where the features are independent, it is well-known that random forests VIMs are biased when features are correlated
 with one another (\citep{strobl2007bias}; \citep{strobl2008conditional}; \citep{nicodemus2009predictor}).
 
-Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between modules is low.  We then use an iterative feature selection algorithm as in \citep{diaz2006gene} to select the most important
-features from each module.  A random forest is then fit to the features that have survived this first round.  A final iterative random forest,  combining features from all
-modules, selects the top $k$ features. 
+Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between modules is low.  We then use recursive feature elimination random forests (RFE) as in \citep{diaz2006gene} to select the most important
+features from each module.  A final RFE is applied to the remaining features, from all modules, and selects the top $k$ features. 
 
 There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
               
@@ -81,13 +80,13 @@ In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In secti
 
 \section{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
-In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed iid
+In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed (iid)
 pairs $(X,Y) \sim G$.  Here $X$ is a $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the $i$th subject will be denoted by $X_{i}^{(v)}$.
 The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Finally, let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be the set of values for feature $v$ across
 all $n$ subjects.
 
 In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$.
-In the case of regression, we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are $iid$ with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
+In the case of regression, we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are iid with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
 In classification, $Y$ is restricted to take the value 0 or 1 and $Y|X$ is a Bernoulli trial with mean $E[Y|X]$.  
 
 If the goal is to predict a new outcome $Y$ based off of measurements, $X$, a good estimate of $f(X)$ is all that is required.
@@ -97,9 +96,9 @@ the outcome, $Y$.
 
 If $p$ is low dimensional $(p=1,2)$, we can simply plot our estimate of $f(X)$ to understand how it varies as function of $X$. 
 If $p$ is moderate or large, $f(X)$ is difficult to interpret.  It is most common in this case, to assume $f(X)$ has a specific parametric
-form so that $f_{\beta}(X)$ is known up to a finite dimensional parameter $\beta$.  In the case of linear regression, $\beta$ is a vector of
-regression coefficients and we can measure the importance of one feature versus another feature by examining the absolute magnitude 
-of their corresponding coefficents.    
+form so that $f_{\beta}(X)$ is known up to a finite dimensional parameter $\beta$.  In the case of linear regression, 
+$\beta$ is a vector of regression coefficients and we can measure the importance of one feature versus another feature by examining the absolute magnitude 
+of their corresponding coefficients (assuming the features have also been standardized).    
 
 If the parametric model $f_{\beta}(X)$ is a close approximation to $f(X)$, it is possible that interpretations based off of $\hat{f}_{\hat{\beta}}(X)$
 will not be misleading.  Likewise, if $f_{\beta}(X)$ is a poor approximation of $f(X)$, the resulting interpretation will be misleading.  
@@ -129,9 +128,9 @@ by $\hat{f}_{k}(X)$.  Each regression tree is highly unstable and gives highly v
 many bootstrap samples leads to more stable estimates of $f(X)$.  The algorithm described thus far is known as bagging (bootstrap-aggregating).  This 
 algorithm is a special case of random forests.  
 
-A further element of randomness is introduced by random forests.  Before a node in a particular tree is split, a subset of features is chosen at random.  Of these randomly 
-chosen features, the feature with the highest marginal importance is used to split the node.  The number of randomly selected features at each stage is
-commonly denoted as $mtry$.  High values of $mtry$ tend to lead to just a few important features getting selected at the majority cut-points.
+A further element of randomness is introduced by random forests.  Before a node in a particular tree is split, a subset of features is chosen at random.  
+The best splitting rule involving only these randomly selected features is then used to split the node.  The number of randomly selected features at each stage is
+commonly denoted as $mtry$.  High values of $mtry$ tend to lead to just a few important features getting selected at the majority of nodes.
 Lower values of $mtry$ allow more features to play a role in the estimation $f(X)$.  In the case of regression, a common default value of $mtry$ is $\sqrt{p}$.
 In the case of classification  $\left\lfloor p/3 \right\rfloor$ is common choice.
   
@@ -155,7 +154,7 @@ The user first specifies a similarity function $s_{ij}=S(X^{(i)},X^{(j)})$ takin
 networks are possible.  If the features are continuous, the most common choice of similarity function is $|Corr(X^{(i)},X^{(j)})|$ or 
 $\frac{1 + Corr(X^{(i)},X^{(j)})}{2}$  according to whether the network is unsigned or signed \citep{zhang2005general}.
 
-This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  This adjacency function determine how similarities translate
+This similarity matrix is then transformed into an adjacency matrix $A=[a_{ij}]$.  The adjacency function determine how similarities translate
 into properties of the network.  For example, in a hard-thresholded network, where nodes are either connected or unconnected,
 the adjacency function determines how high the correlation has to be in order for two nodes to be connected.
 
@@ -189,11 +188,11 @@ provides less biased estimates of VIMs.  In this section, we describe the algori
 The fuzzy forests algorithm can be subdivided into two steps: a screening step and a selection step.  The screening step works in a piecewise fashion
 to screen out unimportant features.  The screening step takes as input a partition of the features such that the correlation within each partition is 
 roughly constant.  Our package, \pkg{fuzzyforest}, facilitates the use of WGCNA to obtain such a partition of features.  However, 
-it is possible to use alternative methods to partition the features.  Denote this partitioning of the features by set $P=\{P_{1},\ldots,P_{m}\}$.
+it is possible to use alternative methods to partition the features.  Denote this partitioning of the features by the set $P=\{P_{1},\ldots,P_{m}\}$.
 Let $p_{l}=|P_{l}|$ so that $\sum_{l=1}^{m}p_{l}=p$.
 
-The screening step operates independently on each partition.  For each element of the partition $P_{l}$, the screening step fits an iterative series of
-random forests to eliminate features in backwards stepwise fashion.  Starting with all features in the partition $P_{l}$, a random forest is fit using all
+The screening step operates independently on each partition.  For each element of the partition $P_{l}$, RFE
+is used to screen out unimportant features.  Starting with all features in the partition $P_{l}$, a random forest is fit using all
 features in $P_{l}$.  The least important features are then eliminated, call the reduced set of features after the first random forest $P_{l}^{(1)}$.  
 For example, the features with VIM in bottom 25\% might be dropped at each step. 
 A 2nd random forest is fit using features in $P_{l}^{(1)}$.  The least important features from this latest random forest are then eliminated leading a
@@ -202,21 +201,21 @@ $p^{(k)}_{l}=|P_{l}^{(k)}|$.
 Features are eliminated in this manner until a user-specified 
 stopping criteria is reached.  For example, features may be eliminated until 5\% of the original $P_{l}$ features remain.  
 
-The user must specify a few tuning parameters at the screening step.  First of all, the user must specify how many features are to be dropped after 
-each random forest is fit, we call this fraction the $drop\_fraction$.   The user must also specify a stopping criteria. 
+The user must specify a few tuning parameters at the screening step.  First, the user must specify how many features are to be dropped after 
+each step of the RFE.  We call this fraction the $drop\_fraction$.   The user must also specify a stopping criteria. 
 In \pkg{fuzzyforest} the user specifies what percentage of the original $p_{l}$ features to retain.  This percentage will be called the $keep\_fraction$.  
-The first time the number of features drops below $keep\_fraction*p_{l}$, the iterative series of random forests will stop and the top 
+The first time the number of features drops below $keep\_fraction*p_{l}$, the RFE will stop and the top 
 $\left\lfloor keep\_fraction*p_{l} \right\rfloor$ features will be selected.  More precisely, for the first iteration $k$ such that $p^{(k)}_{l}<keep\_fraction*p_{l}$, 
 we retain the top $\left\lfloor keep\_fraction*p_{l} \right\rfloor$ features from $P_{l}^{(k-1)}$.         
 
-For each random forest, $mtry$ and $ntree$ must appropriately selected.  Since the number features varies across random forests, $mtree$
-and $ntree$ must be a function of the current number of features.   Suppose we at iteration $k$ and are about fit a random forest to obtain
+For each random forest, $mtry$ and $ntree$ must be appropriately selected.  Since the number of features varies across random forests, $mtree$
+and $ntree$ must be a function of the current number of features.   Suppose we are at iteration $k$ and are about fit a random forest to obtain
 $P_{l}^{(k+1)}\subset P_{l}^{(k)}$.  In the case of regression, \pkg{fuzzyforest} lets $mtry=\sqrt{p^{(k)}_{l}}mtry\_factor$.  For classification 
 \pkg{fuzzyforest} sets $mtry=\left\lfloor p^{(k)}_{l}/3 \right\rfloor mtry\_factor$.  In both cases, $mtry\_factor$ must be pre-specified by the user
 with a default of 1.  The parameter $ntree$ must be set high enough to be able to pick up the effects
 of important variables, however if $ntree$ is set too high, the iterative series of random forests will take a long time to run.  The package \pkg{fuzzyforest} sets $ntree=max(min\_ntree,p^{(k)}_{l}*ntree\_factor)$.
    
-The selection step consists of one last iterative series of random forests. This series of random forests is fit on all features that have
+The selection step consists of one last RFE. This RFE is applied to all features that have
 been selected at the screening step.  Note that a separate choice of $drop\_fraction$, $mtry\_factor$, $min\_tree$,
 and $ntree\_factor$ may be used.  In the package \pkg{fuzzyforest}, $keep\_fraction$ is implicitly defined by user.  The user specifies 
 how many features will selected by the selection step.  
@@ -253,11 +252,11 @@ by fitting a single random forests.  The assumptions of additivity across module
 
 The fuzzy forests algorithm relaxes these overly restrictive assumptions.  Fuzzy forests allows for interactions between features that
 were found to be important within modules.  In biological applications, modules might represent different biological systems.
-Thus, it is reasonable to allow these systems to interact with one another.  In fuzzy forests, the selection step acts as a screening mechanism.
+Thus, it is reasonable to allow these systems to interact with one another.  
 Fuzzy forests is implicitly making the assumption that the features that have high VIMs within modules are also most likely to be the features
 involved in interactions across modules.   
 
-It is important that iterative random forests are used at the selection step.  When features from separate modules are combined,
+It is important that RFE is applied at the selection step.  When features from separate modules are combined,
 the potential for bias due to correlation between features is re-introduced.  The iterative random forests, in practice, manage to
 eliminate unimportant predictors which are correlated with important ones.  
 
@@ -266,13 +265,13 @@ fuzzy forests are less biased than those derived from random forests, the estima
 
 \section{The fuzzyforest package}
 The package \pkg{fuzzyforest}  has two functions for fitting the fuzzy forests model.  The first is \code{WGCNA_fuzzyforest}, the
-second is \code{fuzzyforest}.  The function \code{WGCNA_fuzzyforest} automatically carries out a WGCNA analysis on the input features.
+second is \code{fuzzyforest}.  The function \code{WGCNA_fuzzyforest} automatically carries out a WGCNA analysis on the features.
 Then it uses the newly derived modules as input to the fuzzy forest algorithm.  The WGCNA analysis is carried out via the 
 \code{blockwiseModules} function from the package \pkg{WGCNA}.  
 
 The second function \code{fuzzyforest} assumes that the features have already been partitioned into separate modules.
 In particular a user is able to carefully conduct a separate module detection analysis using \pkg{WGCNA}.  Such an 
-analysis might find the smallest value of $p$ such that the scale-free topology criterion is met.  The function \code{fuzzyforest}
+analysis might find the smallest power $q$ such that the scale-free topology criterion is met.  The function \code{fuzzyforest}
 is then able to carry out the fuzzy forests algorithm using the output of \pkg{WGCNA}.
 
 A number of tuning parameters must be specified before fuzzy forests can be run.   These tuning parameters are organized
@@ -451,7 +450,7 @@ In this paper we have presented the fuzzy forests algorithm as an extension of r
  to outperform random forests.  We carried out simulations comparing random forests to fuzzy forests.     
  
  We also introduced an implementation of fuzzy forests in the \pkg{fuzzyforest} package.  
- The \pkg{fuzzyforest} package has two function for fitting the fuzzy forests algorithm.  The first implementation, \code{WGCNA_fuzzyforest} automatically 
+ The \pkg{fuzzyforest} package has two functions for fitting the fuzzy forests algorithm.  The first implementation, \code{WGCNA_fuzzyforest} automatically 
  carries out WGCNA to partition the features into separate modules.  These modules are then used by the fuzzy forests algorithm for feature selection.
  The second implementation, \code{fuzzyforest} lets the user determine how features should be partitioned before the fuzzy forests algorithm is used 
  for feature selection.  
