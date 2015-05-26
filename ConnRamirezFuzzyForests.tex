@@ -9,18 +9,20 @@
 
 %% almost as usual
 \author{Daniel Conn\\ UCLA SPH, Biostatistics \AND Tuck Ngun\\Department of Human Genetics David Geffen School of Medicine, UCLA \AND  Gang Li\\UCLA SPH, Biostatistics \And Christina M. Ramirez\\UCLA SPH, Biostatistics}
-\title{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for Correlated, High-Dimensional Data}
+\title{Fuzzy Forests: Extending Random Forests Algorithm for Correlated, High-Dimensional Data}
 
 %% for pretty printing and a nice hypersummary also set:
 \Plainauthor{Daniel Conn, Christina Ramirez} %% comma-separated
-\Plaintitle{Fuzzy Forests: A New WGCNA Based Random Forest Algorithm for High-Dimensional, Correlated Data} %% without formatting
+\Plaintitle{Fuzzy Forests: Extending Random Forests Algorithm for Correlated, High-Dimensional Data} %% without formatting
 \Shorttitle{\pkg{fuzzyforest}: Fuzzy Forests in \proglang{R}} %% a short title (if necessary)
 
 %% an abstract and keywords
 \Abstract{In this paper we introduce fuzzy forests, a new machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
- problems.  Fuzzy forests is specifically designed to provide unbiased rankings of variable importance in the presence of correlated features. 
-Fuzzy forests uses Weighted Gene Coexpression Network Analysis (WGCNA) to detect groups of highly correlated features.  Unbiased rankings are
-obtained by fitting separate random forests on each module.  We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforest}.}
+ problems.  Fuzzy forests is specifically designed to provide unbiased rankings of variable importance in the presence of highly correlated features. 
+Fuzzy forests uses Weighted Gene Coexpression Network Analysis (WGCNA) to form modules of features such that the modules are roughly uncorrelated.  Unbiased rankings are
+obtained by fitting separate random forests on each module.  Recursive feature elimination random forests (RFE-RFs) are fit on each module.  The top
+$\bold{x}$\% of predictors are then put into a final RFE-RF and the resulting variables are ranked.
+We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforest}.}
 \Keywords{Random Forests, WGCNA, machine learning,\proglang{R}}
 \Plainkeywords{Random Forests, WGCNA, machine learning,R} %% without formatting
 %% at least one keyword must be supplied
