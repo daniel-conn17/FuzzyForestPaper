@@ -17,14 +17,17 @@
 \Shorttitle{\pkg{fuzzyforest}: Fuzzy Forests in \proglang{R}} %% a short title (if necessary)
 
 %% an abstract and keywords
-\Abstract{In this paper we introduce fuzzy forests, a new machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
- problems.  Fuzzy forests is specifically designed to provide unbiased rankings of variable importance in the presence of highly correlated features. 
-Fuzzy forests uses Weighted Gene Coexpression Network Analysis (WGCNA) to form modules of features such that the modules are roughly uncorrelated.  Unbiased rankings are
-obtained by fitting separate random forests on each module.  Recursive feature elimination random forests (RFE-RFs) are fit on each module.  The top
-$\bold{x}$\% of predictors are then put into a final RFE-RF and the resulting variables are ranked.
-We also introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforest}.}
-\Keywords{Random Forests, WGCNA, machine learning,\proglang{R}}
-\Plainkeywords{Random Forests, WGCNA, machine learning,R} %% without formatting
+\Abstract{In this paper we introduce fuzzy forests, a novel machine learning algorithm for ranking the importance of features in high-dimensional classification and regression
+ problems.  Fuzzy forests is specifically designed to provide relatively unbiased rankings of variable importance in the presence of highly correlated features.
+ We introduce our implementation of fuzzy forests in the \proglang{R} package, \pkg{fuzzyforest}.
+ Fuzzy forests works by taking advantage of the network structure between features.
+ First, the features are partitioned into separate modules such that the correlation within modules is high and
+ the correlation between modules is low.  Then recursive feature elimination random forests (RFE-RFs) 
+ are used on each module, separately.  From the surviving features, a final group is selected and ranked using one last round of RFE-RFs.
+The package \pkg{fuzzyforest} allows for easy use of Weighted Gene Coexpression Network Analysis (WGCNA) 
+to form modules of features such that the modules are roughly uncorrelated.}  
+\Keywords{Random Forests, WGCNA, machine learning, \proglang{R}, networks, $p>>n$, big data, variable selection, variable importance, variable ranking} 
+\Plainkeywords{Random Forests, WGCNA, machine learning,R,networks,p>>n, big data, variable selection, variable importance, variable ranking} %% without formatting
 %% at least one keyword must be supplied
 
 %% publication information
@@ -63,58 +66,76 @@ We also introduce our implementation of fuzzy forests in the \proglang{R} packag
 
 \section{Introduction}
 %% Note: If there is markup in \(sub)section, then it has to be escape as above.
-The problem of identifying important features in the presence of correlation has been an area of intense research within the statistics
-and machine learning community.  Biological applications have, in particular, spurred the development of high dimensional feature selection methods.   
-While model based feature selection algorithms such as the LASSO or SCAD may efficiently detect important features in presence of correlation \citep{raskutti2010restricted}, this efficiency comes at the cost of making parametric assumptions that may not hold in practice. 
+In the era of high-throughput technologies such as multi-color flow cytometry and next generation sequencing, high dimensional data has become 
+increasingly common in biomedical research.  As the ability to generate data has vastly outpaced our ability to analyze it.  In the biomedical
+sciences as well as the 'Omics fields it is very common for the number of parameters to be much larger than the number of observations,
+the so-called $p >> n$ problem.  This problem is exacerbated by the fact that the features are often highly correlated and the correlation
+structure is often unknown a priori.
+
+Identifying important features in this situation has been an area of intense research within the statistics
+and machine learning community.  While model based feature selection algorithms such as the LASSO
+ or SCAD may detect important features in presence of correlation \citep{raskutti2010restricted}, this comes 
+ at the cost of making parametric assumptions that may not hold in practice.  If $p >> n$, LASSO can select
+ at most $n$ features.  In the setting where there are groups of highly correlated features, the LASSO has a 
+ tendency to arbitrarily pick one and shrink the others towards 0 \citep{bondell2008simultaneous}.
  
+Random forests are a popular ensemble machine learning algorithm.  Random forests are non-parametric, non-linear, embarrassingly parallelizable, easy to implement, and have been described as one of the best ``off-the-shelf" classifiers \citep{dua2014machine}.
 Random forest variable importance measures (VIMs) offer a nonparametric alternative to model based feature selection algorithms \citep{breiman2001random}.
-Random forests is a popular ensemble based machine learning algorithm.  While random forest VIMs have demonstrated the ability to accurately capture the true 
+While random forest VIMs have demonstrated the ability to accurately capture the true 
 importance of features in settings where the features are independent, it is well-known that random forests VIMs are biased when features are correlated
 with one another (\citep{strobl2007bias}; \citep{strobl2008conditional}; \citep{nicodemus2009predictor}).
 
-Fuzzy forests cope with correlated features by taking a piecewise approach.  We partition the set of features into distinct modules such that the correlation within each module is high and the correlation between modules is low.  We then use recursive feature elimination random forests (RFE) as in \citep{diaz2006gene} to select the most important
-features from each module.  A final RFE is applied to the remaining features, from all modules, and selects the top $k$ features. 
-
-There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
-              
+Fuzzy forests handle correlated features by taking a piecewise approach.  We first estimate the network structure of the data and partition the set of features into distinct modules such that the correlation within each module is high and the correlation between modules is low.  In this regard, we utilize the functionality of Weighted Gene Coexpression Network Analysis, a rigorous framework for detecting correlation networks \citep{zhang2005general}.  We then use recursive feature elimination random forests (RFE-RFs) as in \citep{diaz2006gene} to select the most important features from each module.  A final RFE-RF is then applied to the remaining features, from all modules, and selects the top $k$ features. 
+       
 The article is organized as follows.  In section 2 of this article, we briefly review the random forests, WGCNA, and introduce the fuzzy forests algorithm.
-In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we conduct simulations comparing fuzzy forests to random forests.  In section 5, we use fuzzy forests to determine which biological factors are important in determining how well an HIV patient copes with the virus.  Section 6 ends the article with a discussion and summary of our results. 
+In section 3, we introduce the \proglang{R} package \pkg{fuzzyforest}.  In section 4, we conduct simulations comparing fuzzy forests to random forests.  In section 5, we use fuzzy forests to determine which immunologic factors are important in 1) determining which patients will be able to control HIV replication without
+use of anti-retrovirals and 2) determining which patients will have immune systems that won't respond to anti-retrovirals.  Section 6 ends the article with a discussion and summary of our results. 
 
 \section{Variable Importance Measures and the Fuzzy Forests Algorithm}
 \subsection{Variable Importance Measures}[2.1]
-In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed (iid)
-pairs $(X,Y) \sim G$.  Here $X$ is a $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the $i$th subject will be denoted by $X_{i}^{(v)}$.
-The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Finally, let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be the set of values for feature $v$ across
-all $n$ subjects.
+In this section, we introduce basic notation and define variable importance measures.  We assume that our data comes in the form of $n$ independently and identically distributed (iid) pairs $(X,Y) \sim G_{(X, Y)}$.  
+Here $X$ is a $p$ dimensional feature vector and $Y$ is a scalar outcome.  The value of the $v$th feature for the $i$th subject will be denoted by $X_{i}^{(v)}$.
+The feature vector for the $i$th subject is denoted by $X_{i}=(X_{i}^{(1)},\ldots,X_{i}^{(p)})$.   Let $X^{(v)}=(X_{1}^{(v)},\ldots,X_{n}^{(v)})$ be the set of values for feature $v$ across all $n$ subjects.  Finally, we denote the marginal distribution of $X$ by $G_{X}$ and the marginal distribution of
+feature $v$, by $G_{X^{(v)}}$.
 
-In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X_{i}$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$.
+In the case of both classification and regression we are interested in modeling the conditional mean of $Y$ given a feature vector $X$.  We denote this conditional mean alternatively as $E[Y|X]$ or $f(X)$.
 In the case of regression, we assume that $Y|X$ has distribution $f(X) + \epsilon$, where the $\epsilon$ are iid with variance $\sigma^{2}$.   In the regression setting, $Y$ is unrestricted. 
-In classification, $Y$ is restricted to take the value 0 or 1 and $Y|X$ is a Bernoulli trial with mean $E[Y|X]$.  
+In binary classification, $Y$ is restricted to take the value 0 or 1 and $Y|X$ is a Bernoulli trial with mean $E[Y|X=x]=P(Y=1|X=x)$.  
+Note that random forests can be easily generalized to handle the case of multi-class classification.  
 
 If the goal is to predict a new outcome $Y$ based off of measurements, $X$, a good estimate of $f(X)$ is all that is required.
-We are interested in more than prediction.  We are interested in understanding how $f(X)$ changes as function of particular features. 
+Here, we are interested in more than prediction,  in particular we wish to in to understand how $f(X)$ changes as function of particular features. 
 If the value of $f(X)$ varies widely according to a particular value of the $v$th feature, $X^{(v)}$ is, in some sense, an ``important" determinant of
 the outcome, $Y$.  
 
 If $p$ is low dimensional $(p=1,2)$, we can simply plot our estimate of $f(X)$ to understand how it varies as function of $X$. 
 If $p$ is moderate or large, $f(X)$ is difficult to interpret.  It is most common in this case, to assume $f(X)$ has a specific parametric
-form so that $f_{\beta}(X)$ is known up to a finite dimensional parameter $\beta$.  In the case of linear regression, 
+form such that $f_{\beta}(X)$ is known up to a finite dimensional parameter $\beta$.  In the case of linear regression, 
 $\beta$ is a vector of regression coefficients and we can measure the importance of one feature versus another feature by examining the absolute magnitude 
 of their corresponding coefficients (assuming the features have also been standardized).    
 
 If the parametric model $f_{\beta}(X)$ is a close approximation to $f(X)$, it is possible that interpretations based off of $\hat{f}_{\hat{\beta}}(X)$
 will not be misleading.  Likewise, if $f_{\beta}(X)$ is a poor approximation of $f(X)$, the resulting interpretation will be misleading.  
 The parametric approximation $f_{\beta}(X)$ may be inadequate for a variety of reasons.  This may occur if important features are 
-not observed.  Even if all appropriate features are measured, $f_{\beta}(X)$ may fail to capture important interactions between features.
+not included.  Even if all appropriate features are included, $f_{\beta}(X)$ may fail to capture important interactions between features.
 If $f_{\beta}(X)$ is a linear regression model, $\sum_{v=1}^{p}\beta_{v}X^{(v)}$, the true $f(X)$ may be nonlinear in such a way that this best linear approximation fails to capture.
   
 Permutation VIMs provide a means of summarizing the importance of individual features without making parametric assumptions.
-In the case of regression, we define the permutation VIM of feature $v$, $X^{(v)}$, as 
+In the case of regression, the random forest permutation VIM of feature $v$ estimates the following parameter: 
 \begin{equation}
 VIM(v)=E(f(X^{(1)}_{i},\ldots,X^{(v)}_{i},\ldots,X^{(p)}_{i}) - f(X^{(1)}_{i},\ldots,\tilde{X}^{(v)}_{i},\ldots,X^{(p)}_{i}))^{2}.
 \end{equation}
-Here, $X^{(v)}_{i}$ and $\tilde{X}^{(v)}_{i}$ are iid with distribution $G_{X^{(v)}}$ where $G_{X^{(v)}}$ is the marginal distribution of $X^{(v)}_{i}$.  This form of the VIM
-is given in a slightly different form in \cite{gregorutti2013correlation} and \cite{zhu2012reinforcement}.
+The above expression deserves further explanation.  First, note that the expression is the same for 
+all choices of index, $i$, because the $(X_{i}, Y_{i})$ are iid with distribution $G_{(X,Y)}$.   
+Next note that $f$ is fixed and the expectation is with respect to the random variables $X_{i}=(X^{(1)}_{i},\ldots,X^{(v)}_{i},\ldots,X^{(p)}_{i})$
+and $\tilde{X}^{(v)}_{i}$.  The random vector $X_{i}$ has distribution $G_{X}$ and $\tilde{X}^{(v)}_{i}$, generated independently of $X_{i}$, has 
+distribution $G_{X^{(v)}}$.  Here, $\tilde{X}^{(v)}_{i}$ can be thought of as an independently generated deviation from $X^{(v)}_{i}$.
+If the value of $f(X_{i})$ changes greatly when $X^{(v)}_{i}$ is replaced by $\tilde{X}^{(v)}_{i}$, it implies that the $v$th feature is highly important.
+In the case where $f_{\beta}(X)=\sum_{v=1}^{p}\beta_{v}X^{(v)}$ is a linear model, with standardized features ($var(X^{(v)}_{i})=1$), 
+$VIM(v)=\beta_{v}^{2}$.
+
+
+Here, $X^{(v)}_{i}$ and $\tilde{X}^{(v)}_{i}$ are iid with distribution $G_{X^{(v)}}$ where $G_{X^{(v)}}$ is the marginal distribution of $X^{(v)}_{i}$.  This form of the VIM is given in a slightly different form in \cite{gregorutti2013correlation} and \cite{zhu2012reinforcement}.
 \cite{gregorutti2013correlation} present a similar expression for the case of classification.  
 These authors also discuss conditions under which the estimate of the permutation VIM derived from random forests is consistent. 
 
@@ -123,6 +144,8 @@ These authors also discuss conditions under which the estimate of the permutatio
 Random forests is a popular ensemble method that has been applied in the setting of both classification and regression.  The random forests algorithm works
 by combining the predictions of an ensemble of classification and regression trees.  Each tree is grown on a separate bootstrap sample of the data.  The number
 of trees grown in this manner is denoted as $ntree$.  The subjects that are not selected in a particular bootstrap sample are said to be ``out of bag."  
+Note that roughly one third of observations will be out of bag for each tree.  These samples play the important role of serving as a test set for
+each tree.
 
 Call the $k$th tree $\hat{f}_{k}(X)$.  In the case of regression trees,
 $\hat{f}(X)=\frac{1}{ntree}\sum_{k=1}^{ntree}\hat{f}_{k}(X)$.  In the case of classification, $\hat{f}(X)$ is the majority vote of the $ntree$ predictions given
@@ -133,22 +156,31 @@ algorithm is a special case of random forests.
 A further element of randomness is introduced by random forests.  Before a node in a particular tree is split, a subset of features is chosen at random.  
 The best splitting rule involving only these randomly selected features is then used to split the node.  The number of randomly selected features at each stage is
 commonly denoted as $mtry$.  High values of $mtry$ tend to lead to just a few important features getting selected at the majority of nodes.
+If $mtry=p$, then random forests are equivalent to bagging.
 Lower values of $mtry$ allow more features to play a role in the estimation $f(X)$.  In the case of regression, a common default value of $mtry$ is $\sqrt{p}$.
-In the case of classification  $\left\lfloor p/3 \right\rfloor$ is common choice.
+In the case of classification  $\left\lfloor p/3 \right\rfloor$ is common choice.  
   
-Random forest VIMs are obtained by testing how predictive accuracy suffers when the values of individual predictors are permuted.  Let $OOB_{k} \subset \{1,\ldots, n\}$ 
-be the out of bag samples in the $k$th bootstrap sample.  Let $\pi_{k}$ be a random permutation of the elements of $OOB_{k}$ and let   
-$\pi_{k}^{(v)}(X_{i}) = (X_{i}^{(1)},\ldots,X_{\pi_{k}(i)}^{(v)},\ldots,X_{i}^{(p)}),$ where $i \in OOB_{k}$.   In other words, $\pi_{k}^{(v)}$ 
-permutes the values of the $v$th feature across all out of bag subjects.  In the case of regression, the variable importance of the $i$th feature from the $k$th tree is defined as
+Random forest VIMs are obtained by testing how predictive accuracy suffers when the values of individual predictors are randomly permuted.  
+If a feature is important for prediction, then permuting the values of that feature destroys the relationship with the outcome.
+Thus, for important features we should subsequently observe significant deterioration in predictive performance.
+VIMs measure the average decline in predictive performance across multiple trees.  
+
+The VIM for the $v$th feature is calculated as follows.
+Let $OOB_{k} \subset \{1,\ldots, n\}$ be the indices for the out of bag sample from the $k$th tree.  
+Let $\pi_{k}^{(v)}=(\pi^{(v)}_{k1},\ldots,\pi^{(v)}_{kn})$ be a random permutation of $OOB_{k}$ and 
+let $\tilde{X}_{i}^{(v)} = (X_{i}^{(1)},\ldots,X^{(v)}_{\pi^{(v)}_{ki}},\ldots,X_{i}^{(p)}),$ where $i \in OOB_{k}$.   
+In the case of regression, the variable importance of the $i$th feature from the $k$th tree is defined as
 \begin{equation}
-\widehat{VIM}^{k}(v)= \frac{\sum_{i \in OOB_{k}}(y_{i}-\hat{f}^{k}(\pi_{k}^{(v)}(X_{i}))^{2} - (y_{i} - \hat{f}^{k}(X_{i}))^{2}}{|OOB_{k}|}
+\widehat{VIM}_{k}(v)= \frac{\sum_{i \in OOB_{k}}(y_{i}-\hat{f}_{k}(\tilde{X}_{i}^{(v)}))^{2} - (y_{i} - \hat{f}_{k}(X_{i}))^{2}}{|OOB_{k}|}
 \end{equation}
 The variable importance for the entire random forest is defined as
 \begin{equation}
-\widehat{VIM}(v) = \frac{\sum_{k=1}^{ntree}\widehat{VIM}^{k}(v)}{ntree}
+\widehat{VIM}(v) = \frac{\sum_{k=1}^{ntree}\widehat{VIM}_{k}(v)}{ntree}
 \end{equation}
 
 \subsection{A Brief Review of WGCNA}[2.3]
+There are a variety of algorithms for partitioning features into distinct, high correlation modules.  In this regard, WGCNA is our method of choice.  WGCNA is a rigorous framework for detecting correlation networks \citep{zhang2005general}.  Although it was first developed to detect modules of highly correlated genes, it has found application in a variety of biological contexts.  The \proglang{R} package \pkg{WGCNA} is a robust, computationally efficient, and well-documented implementation of the WGCNA framework.  We expect that researchers already familiar with \pkg{WGCNA} will easily adopt the fuzzy forests algorithm and we expect that newcomers to WGCNA will be able to make good use of \pkg{WGCNA}'s fine documentation and tutorials.
+
 WGCNA is a rigorous framework for constructing a network of features. 
 This network is then used to determine clusters or modules of inter-related features. 
 We briefly review the steps of a WGCNA network analysis.  Our review closely follows that of \cite{zhang2005general}.  

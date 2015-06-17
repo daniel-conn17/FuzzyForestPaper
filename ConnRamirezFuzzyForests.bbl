@@ -1,4 +1,4 @@
-\begin{thebibliography}{11}
+\begin{thebibliography}{13}
 \newcommand{\enquote}[1]{``#1''}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
@@ -8,6 +8,12 @@
   \providecommand{\doi}{doi:\discretionary{}{}{}\begingroup
   \urlstyle{rm}\Url}\fi
 \providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem[{Bondell and Reich(2008)}]{bondell2008simultaneous}
+Bondell HD, Reich BJ (2008).
+\newblock \enquote{Simultaneous regression shrinkage, variable selection, and
+  supervised clustering of predictors with OSCAR.}
+\newblock \emph{Biometrics}, \textbf{64}(1), 115--123.
 
 \bibitem[{Breiman(2001)}]{breiman2001random}
 Breiman L (2001).
@@ -19,6 +25,11 @@ D{\'\i}az-Uriarte R, De~Andres SA (2006).
 \newblock \enquote{Gene Selection and Classification of Microarray Data Using
   Random Forest.}
 \newblock \emph{BMC bioinformatics}, \textbf{7}(1), 3.
+
+\bibitem[{Dua \emph{et~al.}(2014)Dua, Acharya, and Dua}]{dua2014machine}
+Dua S, Acharya UR, Dua P (2014).
+\newblock \emph{Machine learning in healthcare informatics}.
+\newblock Springer.
 
 \bibitem[{Gregorutti \emph{et~al.}(2013)Gregorutti, Michel, and
   Saint-Pierre}]{gregorutti2013correlation}
